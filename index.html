@@ -1,0 +1,3366 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Representação de Conhecimento em LLMs — ICV UNIOESTE</title>
+<meta name="description" content="Apresentação da Iniciação Científica sobre Representação de Conhecimento em Grandes Modelos de Linguagem — UNIOESTE Cascavel">
+<style>
+/* ═══════════════════════════════════════════
+   CSS CUSTOM PROPERTIES & RESET
+   ═══════════════════════════════════════════ */
+:root {
+  --bg: #0b1020;
+  --bg-card: rgba(21, 28, 50, 0.95);
+  --bg-card-hover: #293354;
+  --cyan: #32d9f2;
+  --violet: #a78bfa;
+  --magenta: #ff5ca8;
+  --amber: #ffc857;
+  --cyan-glow: rgba(50, 217, 242, 0.24);
+  --violet-glow: rgba(167, 139, 250, 0.24);
+  --magenta-glow: rgba(255, 92, 168, 0.2);
+  --text: #e7eafa;
+  --text-dim: #aeb8d2;
+  --text-bright: #fffaff;
+  --font-title: Georgia, 'Times New Roman', serif;
+  --font-body: 'Segoe UI', Arial, sans-serif;
+  --font-mono: 'Cascadia Code', Consolas, monospace;
+  --slide-pad: clamp(1.5rem, 4vw, 4rem);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --transition: 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.8;
+  background:
+    radial-gradient(circle at 5% 72%, rgba(255, 92, 168, 0.11), transparent 20%),
+    radial-gradient(circle at 82% 18%, rgba(50, 217, 242, 0.11), transparent 23%);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 12% 8%, rgba(119, 72, 235, 0.17), transparent 34%),
+    radial-gradient(ellipse at 90% 86%, rgba(19, 183, 221, 0.13), transparent 36%),
+    var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Grid overlay */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(126,157,255,0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(126,157,255,0.045) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ═══════════════════════════════════════════
+   CANVAS BACKGROUND
+   ═══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════
+   PROGRESS BAR & COUNTER
+   ═══════════════════════════════════════════ */
+.progress-bar-track {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 3px;
+  background: rgba(255,255,255,0.06);
+  z-index: 1000;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--violet));
+  transition: width 0.6s cubic-bezier(0.22,1,0.36,1);
+  box-shadow: 0 0 7px var(--cyan-glow);
+}
+
+.slide-counter {
+  position: fixed; top: 14px; right: var(--slide-pad);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  z-index: 1000;
+  letter-spacing: 0.05em;
+}
+.slide-counter .current { color: var(--cyan); font-weight: 700; }
+
+/* ═══════════════════════════════════════════
+   NAV ARROWS
+   ═══════════════════════════════════════════ */
+.nav-arrow {
+  position: fixed;
+  top: 50%; transform: translateY(-50%);
+  z-index: 1000;
+  width: 48px; height: 48px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  background: rgba(15,18,35,0.5);
+  backdrop-filter: blur(8px);
+  color: var(--text-dim);
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.nav-arrow:hover, .nav-arrow:focus-visible {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 0 20px var(--cyan-glow);
+}
+.nav-arrow:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+.nav-arrow.prev { left: 16px; }
+.nav-arrow.next { right: 16px; }
+.nav-arrow.hidden { opacity: 0; pointer-events: none; }
+
+/* ═══════════════════════════════════════════
+   DOT NAV
+   ═══════════════════════════════════════════ */
+.dot-nav {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 10px;
+  z-index: 1000;
+  padding: 8px 16px;
+  background: rgba(15,18,35,0.6);
+  backdrop-filter: blur(10px);
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.dot-nav button {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  background: transparent;
+  cursor: pointer;
+  transition: var(--transition);
+  padding: 0;
+}
+.dot-nav button:hover { border-color: var(--cyan); }
+.dot-nav button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.dot-nav button.active {
+  background: var(--cyan);
+  border-color: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan-glow);
+  transform: scale(1.3);
+}
+
+/* ═══════════════════════════════════════════
+   SLIDE CONTAINER & TRANSITIONS
+   ═══════════════════════════════════════════ */
+.slides-wrapper {
+  position: relative;
+  width: 100vw; height: 100vh;
+  z-index: 2;
+}
+
+.slide {
+  position: absolute; inset: 0;
+  width: 100vw; height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: var(--slide-pad);
+  padding-top: calc(var(--slide-pad) + 20px);
+  padding-bottom: calc(var(--slide-pad) + 50px);
+  opacity: 0;
+  visibility: hidden;
+  transform: none;
+  filter: none;
+  transition: opacity 0.12s ease, visibility 0s 0.12s;
+}
+.slide.active {
+  opacity: 1; visibility: visible;
+  transition-delay: 0s;
+}
+.slide.tearing-down { transition: none; }
+.slide.building { opacity: 1; visibility: visible; transition: none; }
+.slide.building, .slide.building * { pointer-events: none !important; }
+.slide.tearing-down, .slide.tearing-down * { pointer-events: none !important; }
+.slide.reduced-transition { transition: opacity 0.12s ease, visibility 0s 0.12s; }
+
+/* ═══════════════════════════════════════════
+   OVERVIEW MODE
+   ═══════════════════════════════════════════ */
+.overview-backdrop {
+  position: fixed; inset: 0;
+  z-index: 5000;
+  background: rgba(5,6,15,0.92);
+  backdrop-filter: blur(16px);
+  display: none;
+  place-items: center;
+  padding: 2rem;
+  overflow-y: auto;
+}
+.overview-backdrop.open { display: grid; }
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  max-width: 1100px;
+  width: 100%;
+}
+.overview-thumb {
+  aspect-ratio: 16/9;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(255,255,255,0.08);
+  background: var(--bg-card);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: var(--transition);
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  text-align: center;
+}
+.overview-thumb:hover, .overview-thumb:focus-visible {
+  border-color: var(--cyan);
+  box-shadow: 0 0 24px var(--cyan-glow);
+  transform: scale(1.05);
+}
+.overview-thumb.active-thumb { border-color: var(--cyan); background: rgba(34,211,238,0.08); }
+.overview-thumb .thumb-num { font-size: 1.2rem; font-weight: 700; color: var(--cyan); }
+.overview-thumb .thumb-label { font-family: var(--font-body); font-size: 0.65rem; line-height: 1.3; }
+
+/* ═══════════════════════════════════════════
+   COMMON COMPONENTS
+   ═══════════════════════════════════════════ */
+.phase-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid;
+  margin-bottom: 12px;
+}
+.phase-badge.phase1 { color: var(--cyan); border-color: rgba(134,195,188,0.3); background: rgba(134,195,188,0.06); }
+.phase-badge.phase2 { color: var(--violet); border-color: rgba(215,173,114,0.3); background: rgba(215,173,114,0.06); }
+
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  transition: var(--transition);
+}
+.glass-card:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(255,255,255,0.12);
+}
+
+h1, h2, h3 { font-family: var(--font-title); font-weight: 600; line-height: 1.2; }
+h1 { font-size: clamp(1.5rem, 3.5vw, 2.8rem); color: var(--text-bright); }
+h2 { font-size: clamp(1.2rem, 2.5vw, 2rem); color: var(--text-bright); }
+h3 { font-size: clamp(1rem, 1.5vw, 1.2rem); color: var(--text); }
+p, li { font-size: clamp(0.85rem, 1.1vw, 1rem); line-height: 1.65; color: var(--text-dim); }
+
+.accent-cyan { color: var(--cyan); }
+.accent-violet { color: var(--violet); }
+.accent-magenta { color: var(--magenta); }
+.glow-text {
+  text-shadow: 0 0 20px var(--cyan-glow), 0 0 40px rgba(34,211,238,0.15);
+}
+
+.cover-rule {
+  width: 52px; height: 2px;
+  background: var(--violet);
+  border-radius: 0;
+  margin: 12px 0;
+}
+
+/* ═══════════════════════════════════════════
+   SLIDE 1 — CAPA
+   ═══════════════════════════════════════════ */
+#slide1 { text-align: center; gap: 10px; }
+#slide1 .cover-content { max-width: 850px; }
+.cover-title {
+  display: inline;
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: clamp(1.3rem, 3.2vw, 2.4rem);
+  color: var(--text-bright);
+  line-height: 1.3;
+}
+.cover-subtitle {
+  font-family: var(--font-mono);
+  font-size: clamp(0.7rem, 1vw, 0.9rem);
+  color: var(--cyan);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.cover-info {
+  font-size: clamp(0.78rem, 0.95vw, 0.92rem);
+  color: var(--text-dim);
+  line-height: 1.8;
+}
+.cover-info strong { color: var(--text); font-weight: 500; }
+
+.token-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--cyan);
+  background: rgba(134,195,188,0.08);
+  border: 1px solid rgba(134,195,188,0.25);
+  padding: 6px 16px;
+  border-radius: 999px;
+  animation: pulse-token 2.5s ease-in-out infinite;
+  margin-top: 10px;
+}
+@keyframes pulse-token {
+  0%, 100% { box-shadow: 0 0 8px var(--cyan-glow); }
+  50% { box-shadow: 0 0 24px var(--cyan-glow), 0 0 48px rgba(34,211,238,0.12); }
+}
+
+/* ═══════════════════════════════════════════
+   SLIDE 2 — A PESQUISA
+   ═══════════════════════════════════════════ */
+#slide2 .slide-inner { max-width: 950px; width: 100%; text-align: center; }
+.question-box {
+  font-family: var(--font-title);
+  font-size: clamp(1.1rem, 2.2vw, 1.6rem);
+  color: var(--text-bright);
+  padding: 20px;
+  border-left: 3px solid var(--cyan);
+  background: rgba(34,211,238,0.04);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  text-align: left;
+  margin-bottom: 16px;
+}
+
+.method-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+.method-card {
+  text-align: center;
+  padding: clamp(12px, 1.5vw, 20px);
+  position: relative;
+}
+.method-card .card-icon {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+  display: block;
+}
+.method-card h3 { font-size: clamp(0.8rem, 1vw, 0.95rem); margin-bottom: 4px; }
+.method-card p { font-size: 0.75rem; }
+.method-card .card-num {
+  position: absolute; top: 8px; left: 12px;
+  font-family: var(--font-mono); font-size: 0.65rem;
+  color: var(--cyan); opacity: 0.5;
+}
+.method-arrow {
+  display: flex; align-items: center;
+  color: var(--cyan); font-size: 1.2rem;
+  opacity: 0.4;
+}
+.meta-goal {
+  margin-top: 16px;
+  font-family: var(--font-mono);
+  font-size: clamp(0.75rem, 0.9vw, 0.88rem);
+  color: var(--magenta);
+  letter-spacing: 0.05em;
+}
+
+/* ═══════════════════════════════════════════
+   SLIDE 3 — ROTEIRO E PROGRESSO
+   ═══════════════════════════════════════════ */
+#slide3 .slide-inner { max-width: 1050px; width: 100%; }
+
+.timeline-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  position: relative;
+  margin: 20px 0 16px;
+}
+.timeline-track {
+  position: absolute;
+  top: 36px;
+  left: 5%; right: 5%;
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 999px;
+}
+.timeline-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--cyan), var(--violet));
+  border-radius: 999px;
+  transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
+  box-shadow: 0 0 12px var(--cyan-glow);
+}
+.timeline-phases {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  width: 100%;
+  position: relative;
+  z-index: 2;
+}
+.timeline-phase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 8px;
+}
+.phase-dot {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 3px solid;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 3;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem;
+}
+.phase-dot.done {
+  background: var(--cyan);
+  border-color: var(--cyan);
+  box-shadow: 0 0 14px var(--cyan-glow);
+  color: var(--bg);
+}
+.phase-dot.locked {
+  background: var(--bg);
+  border-color: rgba(255,255,255,0.15);
+  color: var(--text-dim);
+}
+.phase-label {
+  font-family: var(--font-title);
+  font-size: clamp(0.7rem, 0.9vw, 0.85rem);
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.phase-label.dimmed { color: var(--text-dim); opacity: 0.5; }
+.phase-years {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-dim);
+}
+.phase-status {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  margin-top: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+.phase-status.done-badge { color: var(--cyan); background: rgba(34,211,238,0.1); }
+.phase-status.locked-badge { color: var(--text-dim); background: rgba(255,255,255,0.04); }
+
+.articles-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 12px;
+}
+.article-node {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(34,211,238,0.2);
+  background: rgba(34,211,238,0.05);
+  color: var(--cyan);
+  cursor: default;
+  transition: var(--transition);
+  position: relative;
+}
+.article-node:hover {
+  background: rgba(34,211,238,0.15);
+  box-shadow: 0 0 16px var(--cyan-glow);
+  transform: translateY(-2px);
+}
+.article-node .tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%; transform: translateX(-50%);
+  background: rgba(15,18,35,0.95);
+  border: 1px solid rgba(34,211,238,0.3);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.65rem;
+  white-space: nowrap;
+  color: var(--text);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.article-node:hover .tooltip { opacity: 1; }
+
+.progress-50 {
+  margin-top: 10px;
+  text-align: center;
+}
+.progress-50 .bar-track {
+  width: 200px;
+  height: 8px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 999px;
+  margin: 6px auto 0;
+  overflow: hidden;
+}
+.progress-50 .bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--cyan), var(--violet));
+  border-radius: 999px;
+  transition: width 1.5s cubic-bezier(0.22,1,0.36,1) 0.5s;
+}
+
+/* ═══════════════════════════════════════════
+   SLIDE 4 — BENGIO
+   ═══════════════════════════════════════════ */
+#slide4 .slide-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(16px, 2vw, 32px);
+  max-width: 1050px; width: 100%;
+  align-items: start;
+}
+.content-col { display: flex; flex-direction: column; gap: 10px; }
+.content-col ul { list-style: none; padding: 0; }
+.content-col li {
+  padding: 6px 0 6px 20px;
+  position: relative;
+  font-size: clamp(0.78rem, 0.9vw, 0.88rem);
+}
+.content-col li::before {
+  content: '→';
+  position: absolute; left: 0;
+  color: var(--cyan);
+  font-family: var(--font-mono);
+}
+
+.viz-col {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 280px;
+}
+.embed-canvas-wrap {
+  width: 100%; aspect-ratio: 4/3;
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(5,6,15,0.8);
+}
+.embed-canvas-wrap canvas { width: 100%; height: 100%; }
+.embed-canvas-label {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  background: rgba(5,6,15,0.7);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.embed-btn {
+  position: absolute; top: 10px; right: 10px;
+  font-family: var(--font-mono); font-size: 0.65rem;
+  padding: 4px 10px; border-radius: 999px;
+  border: 1px solid rgba(34,211,238,0.3);
+  background: rgba(34,211,238,0.08);
+  color: var(--cyan); cursor: pointer;
+  transition: var(--transition);
+}
+.embed-btn:hover { background: rgba(34,211,238,0.2); }
+
+/* ═══════════════════════════════════════════
+   SLIDE 5 — WORD2VEC
+   ═══════════════════════════════════════════ */
+#slide5 .slide-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(16px, 2vw, 32px);
+  max-width: 1050px; width: 100%;
+  align-items: start;
+}
+
+.analogy-calc {
+  padding: clamp(12px, 1.5vw, 20px);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.analogy-buttons {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.analogy-btn {
+  font-family: var(--font-mono); font-size: 0.75rem;
+  padding: 8px 14px; border-radius: var(--radius-sm);
+  border: 1px solid rgba(139,92,246,0.3);
+  background: rgba(139,92,246,0.08);
+  color: var(--violet); cursor: pointer;
+  transition: var(--transition);
+}
+.analogy-btn:hover, .analogy-btn.active {
+  background: rgba(139,92,246,0.2);
+  box-shadow: 0 0 16px var(--violet-glow);
+}
+.analogy-result {
+  min-height: 60px;
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--font-mono);
+  font-size: clamp(0.85rem, 1.1vw, 1rem);
+  flex-wrap: wrap;
+}
+.analogy-result .op { color: var(--text-dim); }
+.analogy-result .word-token {
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.analogy-result .word-token.w-pos { background: rgba(34,211,238,0.12); color: var(--cyan); border: 1px solid rgba(34,211,238,0.3); }
+.analogy-result .word-token.w-neg { background: rgba(236,72,153,0.12); color: var(--magenta); border: 1px solid rgba(236,72,153,0.3); }
+.analogy-result .word-token.w-res { background: rgba(139,92,246,0.15); color: var(--violet); border: 1px solid rgba(139,92,246,0.4); animation: popIn 0.4s cubic-bezier(0.22,1,0.36,1); }
+@keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.skipgram-diagram {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 8px; margin-top: 8px;
+}
+.skipgram-diagram .sg-center {
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  background: rgba(139,92,246,0.15);
+  border: 1px solid rgba(139,92,246,0.3);
+  color: var(--violet);
+  font-family: var(--font-mono); font-weight: 700;
+}
+.skipgram-diagram .sg-arrows { color: var(--text-dim); font-size: 1.2rem; }
+.skipgram-diagram .sg-context {
+  display: flex; gap: 10px;
+}
+.skipgram-diagram .sg-word {
+  padding: 5px 12px;
+  border-radius: 8px;
+  background: rgba(34,211,238,0.08);
+  border: 1px solid rgba(34,211,238,0.2);
+  color: var(--cyan);
+  font-family: var(--font-mono); font-size: 0.75rem;
+}
+
+/* ═══════════════════════════════════════════
+   SLIDE 6 — ELMo
+   ═══════════════════════════════════════════ */
+#slide6 .slide-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(16px, 2vw, 32px);
+  max-width: 1050px; width: 100%;
+  align-items: start;
+}
+
+.elmo-demo {
+  padding: clamp(12px, 1.5vw, 20px);
+  display: flex; flex-direction: column; gap: 14px;
+}
+.elmo-sentences { display: flex; flex-direction: column; gap: 10px; }
+.elmo-sentence-btn {
+  text-align: left;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.elmo-sentence-btn:hover, .elmo-sentence-btn.active {
+  border-color: var(--cyan);
+  background: rgba(34,211,238,0.06);
+}
+.elmo-sentence-btn .highlight-word {
+  color: var(--cyan); font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: rgba(34,211,238,0.4);
+  text-underline-offset: 3px;
+}
+
+.layers-stack {
+  display: flex; flex-direction: column-reverse; gap: 6px;
+  margin-top: 6px;
+}
+.layer-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono); font-size: 0.72rem;
+  transition: var(--transition);
+}
+.layer-bar .layer-label { min-width: 80px; color: var(--text-dim); }
+.layer-bar .layer-desc { color: var(--text); }
+.layer-bar.l-semantic { border-left: 3px solid var(--violet); background: rgba(139,92,246,0.06); }
+.layer-bar.l-syntax { border-left: 3px solid var(--cyan); background: rgba(34,211,238,0.06); }
+.layer-bar.l-embed { border-left: 3px solid var(--magenta); background: rgba(236,72,153,0.06); }
+
+/* ═══════════════════════════════════════════
+   SLIDE 7 — SENTENCEPIECE
+   ═══════════════════════════════════════════ */
+#slide7 .slide-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(16px, 2vw, 32px);
+  max-width: 1050px; width: 100%;
+  align-items: start;
+}
+
+.tokenizer-box {
+  padding: clamp(12px, 1.5vw, 20px);
+}
+.tokenizer-input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-bright);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  outline: none;
+  transition: var(--transition);
+}
+.tokenizer-input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 16px var(--cyan-glow);
+}
+.tokenizer-input::placeholder { color: var(--text-dim); }
+.tokenizer-output {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  min-height: 44px;
+  margin-top: 12px;
+  align-items: center;
+}
+.token-chip {
+  display: inline-flex; align-items: center;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 500;
+  animation: chipIn 0.35s cubic-bezier(0.22,1,0.36,1) both;
+  border: 1px solid;
+}
+@keyframes chipIn { from { transform: scale(0); opacity: 0; } }
+.token-chip:nth-child(1) { animation-delay: 0s; }
+.token-chip:nth-child(2) { animation-delay: 0.05s; }
+.token-chip:nth-child(3) { animation-delay: 0.10s; }
+.token-chip:nth-child(4) { animation-delay: 0.12s; }
+.token-chip:nth-child(5) { animation-delay: 0.15s; }
+.token-chip:nth-child(6) { animation-delay: 0.18s; }
+.token-chip:nth-child(7) { animation-delay: 0.21s; }
+.token-chip:nth-child(8) { animation-delay: 0.24s; }
+.token-chip:nth-child(9) { animation-delay: 0.27s; }
+.token-chip:nth-child(10) { animation-delay: 0.30s; }
+.token-chip:nth-child(11) { animation-delay: 0.33s; }
+.token-chip:nth-child(12) { animation-delay: 0.36s; }
+
+.tokenizer-actions {
+  display: flex; gap: 8px; margin-top: 10px;
+}
+.tok-btn {
+  font-family: var(--font-mono); font-size: 0.72rem;
+  padding: 6px 14px; border-radius: 999px;
+  border: 1px solid rgba(34,211,238,0.3);
+  background: rgba(34,211,238,0.08);
+  color: var(--cyan); cursor: pointer;
+  transition: var(--transition);
+}
+.tok-btn:hover { background: rgba(34,211,238,0.2); }
+
+/* ═══════════════════════════════════════════
+   SLIDE 8 — TRANSFORMER
+   ═══════════════════════════════════════════ */
+#slide8 .slide-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(16px, 2vw, 32px);
+  max-width: 1050px; width: 100%;
+  align-items: start;
+}
+
+.attn-heatmap-wrap {
+  padding: clamp(10px, 1.2vw, 16px);
+}
+.attn-sentence {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 12px;
+}
+.attn-word {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-family: var(--font-mono); font-size: 0.8rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.attn-word:hover, .attn-word.active {
+  border-color: var(--violet);
+  background: rgba(139,92,246,0.12);
+  color: var(--violet);
+}
+.attn-grid {
+  display: grid;
+  gap: 3px;
+  margin-top: 10px;
+}
+.attn-cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  transition: background 0.3s;
+  position: relative;
+}
+.attn-cell-label {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: rgba(255,255,255,0.7);
+}
+
+.wave-compare {
+  display: flex; gap: 16px; margin-top: 12px;
+}
+.wave-box {
+  flex: 1;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
+  text-align: center;
+}
+.wave-box h4 {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.wave-box canvas { width: 100%; height: 50px; }
+
+/* ═══════════════════════════════════════════
+   SLIDE 9 — GPT vs BERT
+   ═══════════════════════════════════════════ */
+#slide9 .slide-inner { max-width: 1050px; width: 100%; }
+
+.split-view {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.split-half {
+  padding: clamp(16px, 2vw, 24px);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.split-half.gpt-side {
+  background: rgba(236,72,153,0.04);
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+.split-half.bert-side {
+  background: rgba(34,211,238,0.04);
+}
+.split-half h3 {
+  font-family: var(--font-mono);
+  font-size: clamp(0.9rem, 1.2vw, 1.1rem);
+}
+.split-half h3.gpt-title { color: var(--magenta); }
+.split-half h3.bert-title { color: var(--cyan); }
+.split-half p { font-size: clamp(0.75rem, 0.85vw, 0.85rem); }
+
+.light-demo {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(5,6,15,0.5);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.light-demo-words {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.light-word {
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  transition: var(--transition);
+  border: 1px solid transparent;
+}
+.light-word.lit-gpt { background: rgba(236,72,153,0.15); color: var(--magenta); border-color: rgba(236,72,153,0.3); }
+.light-word.lit-bert { background: rgba(34,211,238,0.15); color: var(--cyan); border-color: rgba(34,211,238,0.3); }
+.light-word.dimmed { opacity: 0.2; }
+.light-word.masked {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-dim);
+  border: 1px dashed rgba(255,255,255,0.2);
+}
+
+.mask-controls {
+  display: flex; gap: 8px; margin-top: 10px; justify-content: center;
+}
+.mask-btn {
+  font-family: var(--font-mono); font-size: 0.72rem;
+  padding: 6px 14px; border-radius: 999px;
+  border: 1px solid;
+  background: transparent;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.mask-btn.gpt-btn { color: var(--magenta); border-color: rgba(236,72,153,0.3); }
+.mask-btn.gpt-btn:hover, .mask-btn.gpt-btn.active { background: rgba(236,72,153,0.15); }
+.mask-btn.bert-btn { color: var(--cyan); border-color: rgba(34,211,238,0.3); }
+.mask-btn.bert-btn:hover, .mask-btn.bert-btn.active { background: rgba(34,211,238,0.15); }
+
+.donut-chart {
+  width: 80px; height: 80px;
+  margin: 8px auto;
+}
+
+/* ═══════════════════════════════════════════
+   SLIDE 10 — T5 & NEXT STEPS
+   ═══════════════════════════════════════════ */
+#slide10 .slide-inner { max-width: 1050px; width: 100%; }
+
+.t5-section {
+  padding: clamp(14px, 1.5vw, 20px);
+  margin-bottom: 16px;
+}
+
+.evolution-timeline {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  padding: 10px 0;
+  margin: 12px 0;
+}
+.evo-node {
+  display: flex; flex-direction: column; align-items: center;
+  min-width: 70px;
+  font-family: var(--font-mono); font-size: 0.6rem;
+  color: var(--text-dim);
+  gap: 4px;
+}
+.evo-node .evo-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--cyan);
+  background: var(--bg);
+  transition: var(--transition);
+}
+.evo-node .evo-dot.filled { background: var(--cyan); box-shadow: 0 0 8px var(--cyan-glow); }
+.evo-arrow {
+  width: 20px; height: 2px;
+  background: rgba(34,211,238,0.3);
+  flex-shrink: 0;
+}
+
+.next-steps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+.next-step-card {
+  padding: 14px;
+  font-size: 0.78rem;
+}
+.next-step-card h4 {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  margin-bottom: 6px;
+}
+.next-step-card.done-card { border-left: 3px solid var(--cyan); }
+.next-step-card.done-card h4 { color: var(--cyan); }
+.next-step-card.pending-card { border-left: 3px solid var(--violet); opacity: 0.7; }
+.next-step-card.pending-card h4 { color: var(--violet); }
+
+.closing-impact {
+  text-align: center;
+  margin-top: 16px;
+  font-family: var(--font-title);
+  font-size: clamp(0.95rem, 1.5vw, 1.2rem);
+  color: var(--text-bright);
+  font-style: italic;
+}
+.closing-thanks {
+  text-align: center;
+  margin-top: 14px;
+  padding: 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.closing-thanks h2 {
+  font-size: clamp(1.3rem, 2vw, 1.8rem);
+  background: linear-gradient(90deg, var(--cyan), var(--violet), var(--magenta));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.closing-thanks p { font-size: 0.85rem; margin-top: 8px; }
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .slide { padding: 1rem; padding-top: 2rem; padding-bottom: 3.5rem; }
+  .nav-arrow { width: 36px; height: 36px; font-size: 1rem; }
+  .nav-arrow.prev { left: 6px; }
+  .nav-arrow.next { right: 6px; }
+
+  #slide4 .slide-inner,
+  #slide5 .slide-inner,
+  #slide6 .slide-inner,
+  #slide7 .slide-inner,
+  #slide8 .slide-inner {
+    grid-template-columns: 1fr;
+  }
+  .method-cards { grid-template-columns: repeat(2, 1fr); }
+  .timeline-phases { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .timeline-track { display: none; }
+  .split-view { grid-template-columns: 1fr; }
+  .split-half.gpt-side { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .overview-grid { grid-template-columns: repeat(2, 1fr); }
+  .next-steps-grid { grid-template-columns: 1fr; }
+  .wave-compare { flex-direction: column; }
+}
+
+/* ═══════════════════════════════════════════
+   REDUCED MOTION
+   ═══════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .slide.reduced-transition { transition: opacity 0.12s ease, visibility 0s 0.12s !important; }
+  .slide { filter: none !important; transform: none !important; }
+  .slide.active { opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════
+   ESCALA E PRESENÇA VISUAL PARA APRESENTAÇÃO
+   ═══════════════════════════════════════════ */
+:root { --slide-pad: clamp(1.5rem, 5vw, 5rem); }
+
+@media (min-width: 769px) {
+  .slide {
+    padding-left: clamp(4.5rem, 5vw, 5rem);
+    padding-right: clamp(4.5rem, 5vw, 5rem);
+  }
+}
+
+.slide {
+  isolation: isolate;
+}
+.slide::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 10% 18%, rgba(167,139,250,0.11), transparent 34%),
+    radial-gradient(ellipse at 90% 82%, rgba(50,217,242,0.09), transparent 36%),
+    radial-gradient(ellipse at 50% 48%, rgba(50,217,242,0.035), transparent 68%);
+}
+.slide[data-phase="phase2"]::before {
+  background:
+    radial-gradient(ellipse at 86% 16%, rgba(255,92,168,0.12), transparent 36%),
+    radial-gradient(ellipse at 12% 84%, rgba(50,217,242,0.1), transparent 34%),
+    radial-gradient(ellipse at 50% 48%, rgba(167,139,250,0.045), transparent 68%);
+}
+.slide > * { position: relative; z-index: 1; }
+
+h2 {
+  font-size: clamp(1.9rem, 3.4vw, 3.25rem);
+  letter-spacing: -0.015em;
+}
+p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
+.glass-card {
+  background: var(--bg-card);
+  border-color: rgba(255,255,255,0.1);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.16);
+  backdrop-filter: none;
+}
+.glass-card:hover {
+  border-color: rgba(134,195,188,0.38);
+  background: var(--bg-card-hover);
+}
+.phase-badge {
+  font-size: 0.86rem;
+  padding: 0 0 7px;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  border-radius: 0;
+  letter-spacing: 0.08em;
+}
+.nav-arrow { width: 56px; height: 56px; font-size: 1.55rem; }
+.dot-nav { gap: 12px; padding: 10px 18px; }
+.dot-nav button { width: 12px; height: 12px; }
+
+#slide1 { gap: 20px; }
+#slide1 .cover-content {
+  width: min(1220px, 100%);
+  max-width: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
+  align-items: center;
+  gap: clamp(28px, 5vw, 72px);
+  text-align: left;
+}
+#slide1 .cover-copy { min-width: 0; }
+.cover-title {
+  font-size: clamp(2.45rem, 4.7vw, 4.45rem);
+  line-height: 1.08;
+}
+#slide1 .cover-rule { margin: 18px 0 !important; }
+.method-card .card-icon { color: var(--cyan); }
+.method-card:nth-child(2) .card-icon { color: var(--violet); }
+.method-card:nth-child(3) .card-icon { color: var(--magenta); }
+.method-card:nth-child(4) .card-icon { color: var(--cyan); }
+.method-card .card-icon svg {
+  width: 48px;
+  height: 48px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.cover-subtitle {
+  font-size: clamp(0.9rem, 1.25vw, 1.05rem);
+  margin-bottom: 16px;
+}
+.cover-info {
+  font-size: clamp(1rem, 1.25vw, 1.15rem);
+  line-height: 1.9;
+}
+.cover-visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 390px;
+  isolation: isolate;
+}
+.cover-visual::before {
+  content: '';
+  position: absolute;
+  width: 78%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  z-index: -1;
+  background: radial-gradient(circle, rgba(126,87,255,0.25), rgba(31,192,226,0.12) 48%, transparent 72%);
+  filter: blur(12px);
+}
+.cover-visual svg { width: min(100%, 470px); overflow: visible; }
+.cover-network-link {
+  fill: none;
+  stroke: url(#coverLinkGradient);
+  stroke-width: 2;
+  stroke-dasharray: 6 8;
+  animation: signal-flow 5s linear infinite;
+}
+.cover-network-node {
+  fill: #10172d;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 8px currentColor);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: node-breathe 3s ease-in-out infinite alternate;
+}
+.node-cyan { color: var(--cyan); stroke: var(--cyan); }
+.node-violet { color: var(--violet); stroke: var(--violet); }
+.node-magenta { color: var(--magenta); stroke: var(--magenta); }
+.node-amber { color: var(--amber); stroke: var(--amber); }
+.cover-core {
+  fill: url(#coverCoreGradient);
+  stroke: rgba(255,255,255,0.76);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 22px rgba(167,139,250,0.8));
+}
+.cover-core-label {
+  fill: #fffaff;
+  font: 700 17px var(--font-mono);
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+.cover-visual-label {
+  fill: rgba(234,239,255,0.78);
+  font: 600 10px var(--font-mono);
+  letter-spacing: 1.3px;
+  text-anchor: middle;
+}
+.cover-token {
+  position: absolute;
+  padding: 8px 11px;
+  border: 1px solid rgba(151,168,255,0.4);
+  border-radius: 9px;
+  background: rgba(11,16,32,0.86);
+  color: #e6eaff;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.24), 0 0 22px rgba(108,96,255,0.12);
+  font: 600 0.72rem var(--font-mono);
+  letter-spacing: 0.02em;
+  animation: token-float 4s ease-in-out infinite;
+}
+.cover-token.token-context { top: 10%; left: 0; color: var(--cyan); border-color: rgba(50,217,242,0.48); }
+.cover-token.token-embedding { top: 18%; right: 0; color: var(--violet); border-color: rgba(167,139,250,0.5); animation-delay: -1.3s; }
+.cover-token.token-query { bottom: 17%; right: 1%; color: var(--magenta); border-color: rgba(255,92,168,0.48); animation-delay: -2.5s; }
+.cover-token.token-next { bottom: 7%; left: 5%; color: var(--amber); border-color: rgba(255,200,87,0.45); animation-delay: -0.8s; }
+@keyframes signal-flow { to { stroke-dashoffset: -56; } }
+@keyframes node-breathe { to { transform: scale(1.14); } }
+@keyframes token-float { 50% { transform: translateY(-7px) rotate(-1deg); } }
+.token-pill { font-size: 1.2rem; padding: 9px 20px; animation: none; }
+
+#slide2 .slide-inner { max-width: 1220px; }
+#slide2 .slide-inner > p { font-size: clamp(1rem, 1.25vw, 1.2rem) !important; }
+.question-box {
+  font-size: clamp(1.5rem, 2.7vw, 2.35rem);
+  padding: clamp(24px, 3vw, 38px);
+  border-left-width: 5px;
+  margin-bottom: 22px;
+}
+.method-cards { gap: 18px; margin-top: 24px; }
+.method-card {
+  min-height: 190px;
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.method-card .card-icon { font-size: 2.7rem; margin-bottom: 12px; }
+.method-card h3 { font-size: clamp(1.05rem, 1.4vw, 1.3rem); margin-bottom: 8px; }
+.method-card p { font-size: clamp(0.95rem, 1.1vw, 1.05rem); }
+.meta-goal {
+  margin-top: 24px;
+  font-size: clamp(0.95rem, 1.2vw, 1.1rem);
+}
+
+#slide3 .slide-inner { max-width: 1220px; }
+#slide3 .slide-inner > p { font-size: 1rem !important; }
+.timeline-container { margin: 24px 0 22px; }
+.timeline-track { top: 28px; height: 5px; }
+.timeline-phase {
+  margin: 0 7px;
+  padding: 14px 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  background: rgba(12,16,32,0.7);
+}
+.phase-dot { width: 32px; height: 32px; font-size: 0.8rem; }
+.phase-label { font-size: clamp(1rem, 1.35vw, 1.2rem); }
+.phase-years { font-size: 0.82rem; }
+.phase-status { font-size: 0.72rem; padding: 5px 12px; }
+.timeline-phase > span:not(.phase-label):not(.phase-years):not(.phase-status) {
+  font-size: 0.9rem !important;
+}
+.articles-grid { gap: 10px; margin-top: 16px; }
+.article-node { font-size: 0.82rem; padding: 8px 14px; }
+.progress-50 { margin-top: 16px; }
+.progress-50 > span { font-size: 1rem !important; }
+.progress-50 .bar-track { width: 260px; height: 11px; }
+
+#slide4 .slide-inner,
+#slide5 .slide-inner,
+#slide6 .slide-inner,
+#slide7 .slide-inner,
+#slide8 .slide-inner {
+  max-width: 1380px;
+  gap: clamp(32px, 4vw, 64px);
+  align-items: center;
+}
+.content-col { gap: 18px; }
+.content-col li {
+  font-size: clamp(1rem, 1.2vw, 1.15rem);
+  line-height: 1.55;
+  padding: 10px 0 10px 28px;
+}
+.content-col li::before { font-size: 1.2rem; }
+.viz-col { min-height: 360px; }
+.embed-canvas-wrap {
+  border-color: rgba(34,211,238,0.22);
+  box-shadow: 0 24px 70px rgba(0,0,0,0.32), 0 0 40px rgba(34,211,238,0.06);
+}
+.embed-canvas-label { font-size: 0.82rem; padding: 6px 12px; }
+.embed-btn, .tok-btn, .analogy-btn, .mask-btn {
+  font-size: 0.88rem;
+  padding: 10px 16px;
+}
+.analogy-calc h3,
+.elmo-demo h3,
+.tokenizer-box h3,
+.attn-heatmap-wrap h3 { font-size: 1.25rem !important; }
+.analogy-calc { gap: 18px; }
+.analogy-buttons { gap: 10px; }
+.analogy-result { font-size: clamp(1rem, 1.3vw, 1.2rem); }
+.skipgram-diagram { gap: 10px; margin-top: 14px; }
+.skipgram-diagram .sg-center { padding: 12px 24px; font-size: 1rem; }
+.skipgram-diagram .sg-word { padding: 8px 14px; font-size: 0.9rem; }
+.elmo-demo, .tokenizer-box, .attn-heatmap-wrap { padding: 24px; }
+.elmo-sentence-btn { padding: 14px 18px; font-size: 1rem; }
+.layer-bar { padding: 12px 16px; font-size: 0.9rem; }
+.layer-bar .layer-label { min-width: 100px; }
+.tokenizer-input { padding: 16px 18px; font-size: 1rem; }
+.token-chip { padding: 8px 14px; font-size: 0.95rem; }
+.attn-word { padding: 9px 14px; font-size: 0.95rem; }
+.attn-heatmap-wrap > p { font-size: 0.95rem !important; }
+.attn-grid { max-width: 420px; margin-left: auto; margin-right: auto; }
+.wave-box { padding: 14px; }
+.wave-box h4 { font-size: 0.85rem; }
+.wave-box canvas { height: 64px; }
+
+#slide9 .slide-inner, #slide10 .slide-inner { max-width: 1380px; width: 100%; }
+#slide9 .split-view { gap: 16px; border: 0; overflow: visible; }
+.split-half {
+  padding: clamp(24px, 3vw, 40px);
+  gap: 16px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius);
+}
+.split-half h3 { font-size: clamp(1.35rem, 1.8vw, 1.65rem); }
+.split-half p { font-size: 1.05rem !important; }
+.light-demo { padding: 20px; border-color: rgba(255,255,255,0.1); }
+.light-word { padding: 8px 12px; font-size: 0.9rem; }
+.donut-chart { width: 100px; height: 100px; }
+.t5-section { padding: clamp(22px, 3vw, 36px); margin-bottom: 20px; }
+.t5-section h3 { font-size: 1.3rem !important; }
+.t5-section p { font-size: 1rem !important; }
+.evo-node { min-width: 90px; font-size: 0.78rem; gap: 7px; }
+.evo-node .evo-dot { width: 16px; height: 16px; }
+.evo-arrow { width: 32px; }
+.next-steps-grid { gap: 18px; margin-top: 18px; }
+.next-step-card { padding: 20px; font-size: 0.95rem; }
+.next-step-card h4 { font-size: 0.95rem; margin-bottom: 10px; }
+.closing-impact { font-size: clamp(1.15rem, 1.8vw, 1.45rem); }
+.closing-thanks { padding: 22px; }
+.closing-thanks h2 { font-size: clamp(1.7rem, 2.5vw, 2.2rem); }
+.closing-thanks p { font-size: 1rem; }
+
+@media (max-height: 800px) and (min-width: 769px) {
+  .slide { padding-top: 4rem; padding-bottom: 4rem; }
+  .method-card { min-height: 160px; }
+  .timeline-phase { padding: 10px 8px; }
+  .content-col { gap: 12px; }
+  .content-col li { padding-top: 6px; padding-bottom: 6px; }
+  .viz-col { min-height: 300px; }
+  #slide8 .attn-grid { max-width: 350px; }
+  #slide10 .closing-thanks { margin-top: 5px; padding: 8px; }
+  #slide10 .closing-thanks h2 { font-size: 1.5rem; }
+  #slide10 .closing-thanks p { font-size: 0.85rem; margin-top: 4px; }
+  .t5-section { padding: 20px; }
+  .closing-thanks { padding: 12px; margin-top: 8px; }
+}
+
+@media (max-width: 768px) {
+  .slide {
+    overflow-y: auto;
+    justify-content: flex-start;
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+  h2 { font-size: clamp(1.7rem, 6vw, 2.4rem); }
+  .cover-title { font-size: clamp(2rem, 8vw, 3rem); }
+  .method-card { min-height: 150px; padding: 18px 12px; }
+  .timeline-phase { margin: 0; padding: 12px 8px; }
+  .timeline-track { display: none; }
+  .viz-col { min-height: 0; }
+  #slide9 .split-view { gap: 10px; }
+  .split-half { padding: 20px; }
+}
+
+.progress-bar-track { height: 5px; }
+.agent-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+.agent-canvas.active { opacity: 1; }
+.build-item { --build-color: var(--cyan); }
+.build-item.build-wireframe {
+  opacity: 0.24 !important;
+  outline: 1px dashed var(--build-color);
+  outline-offset: 3px;
+  filter: saturate(0.45);
+}
+.build-item.build-reveal { animation: item-materialize 0.38s cubic-bezier(0.2,0.8,0.2,1); }
+.build-item.build-tearing-down { animation: item-disassemble 0.36s cubic-bezier(0.4,0,0.8,0.2) both; }
+.build-item .build-stroke {
+  stroke-dasharray: var(--stroke-length);
+  stroke-dashoffset: var(--stroke-length);
+}
+.build-item.build-reveal .build-stroke {
+  animation: item-stroke-draw 0.32s ease-out var(--stroke-delay, 0ms) both;
+}
+@keyframes item-materialize {
+  0% { opacity: 0.18; clip-path: inset(0 100% 0 0); filter: brightness(2.2) saturate(1.7); }
+  68% { opacity: 1; clip-path: inset(0 0 0 0); filter: brightness(1.35) saturate(1.25); }
+  100% { opacity: 1; clip-path: inset(0 0 0 0); filter: none; }
+}
+@keyframes item-disassemble {
+  0% { opacity: 1; transform: scale(1); filter: none; }
+  100% { opacity: 0; transform: scale(0.94); filter: blur(8px) brightness(1.8); }
+}
+@keyframes item-stroke-draw {
+  to { stroke-dashoffset: 0; }
+}
+@media (max-width: 768px) {
+  .build-item.build-wireframe { outline-offset: 1px; }
+}
+
+#slide9 .article-layout,
+#slide10 .article-layout,
+#slide11 .article-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  align-items: center;
+  gap: clamp(28px, 4vw, 64px);
+  width: 100%;
+  max-width: 1380px;
+}
+.article-copy { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.article-copy h2 { margin: 0; }
+.article-lead {
+  color: var(--text-bright);
+  font-size: clamp(1.1rem, 1.45vw, 1.35rem);
+  line-height: 1.5;
+}
+.article-points { display: grid; gap: 12px; }
+.article-point {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 12px 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-sm);
+  background: rgba(15,18,35,0.58);
+}
+.point-index {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--violet);
+  padding-top: 2px;
+}
+.article-point h3 {
+  color: var(--text-bright);
+  font-size: clamp(1rem, 1.25vw, 1.15rem);
+  margin-bottom: 4px;
+}
+.article-point p {
+  font-size: clamp(0.9rem, 1.05vw, 1rem);
+  line-height: 1.5;
+}
+.article-point code {
+  color: var(--cyan);
+  font-family: var(--font-mono);
+}
+.paper-visual {
+  width: 100%;
+  padding: clamp(20px, 2.4vw, 32px);
+  border-color: rgba(215,173,114,0.28);
+}
+.visual-kicker, .visual-caption, .token-label, .span-label, .nsp-label {
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+.visual-kicker {
+  color: var(--violet);
+  font-size: 0.88rem;
+  text-transform: uppercase;
+}
+.visual-caption {
+  color: var(--text-dim);
+  font-size: 0.83rem;
+  line-height: 1.5;
+  text-align: center;
+}
+.decoder-stack {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 7px;
+  margin: 18px 0 8px;
+}
+.decoder-stack span {
+  display: grid;
+  place-items: center;
+  min-height: 27px;
+  border: 1px solid rgba(215,173,114,0.34);
+  border-radius: 6px;
+  background: rgba(215,173,114,0.1);
+  color: #e0c493;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+.token-prediction {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 18px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(5,6,15,0.58);
+}
+.token-label { color: var(--text-dim); font-size: 0.78rem; }
+.token-stream, .context-sentence {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.token-stream span, .context-sentence span, .context-sentence strong {
+  padding: 8px 11px;
+  border: 1px solid rgba(134,195,188,0.25);
+  border-radius: 8px;
+  background: rgba(134,195,188,0.08);
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+}
+.prediction-arrow { color: var(--text-dim); font-size: 0.9rem; }
+.predicted-token {
+  padding: 9px 18px;
+  border: 1px solid rgba(216,132,112,0.4);
+  border-radius: 9px;
+  background: rgba(216,132,112,0.12);
+  color: var(--magenta);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+.hidden-future { display: flex; align-items: center; gap: 7px; color: var(--text-dim); opacity: 0.55; }
+.hidden-future span {
+  padding: 6px 9px;
+  border: 1px dashed rgba(255,255,255,0.2);
+  border-radius: 7px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+.hidden-future small { font-size: 0.7rem; }
+.article-takeaway {
+  padding: 13px 15px;
+  border-left: 3px solid var(--violet);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: rgba(139,92,246,0.08);
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.article-takeaway strong { color: var(--text-bright); }
+
+.bert-visual { border-color: rgba(134,195,188,0.28); }
+.bert-visual .visual-kicker { color: var(--cyan); }
+.context-sentence { margin: 22px 0 12px; }
+.context-sentence strong {
+  border-color: rgba(216,132,112,0.45);
+  background: rgba(216,132,112,0.14);
+  color: var(--magenta);
+}
+.mlm-ratios {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin: 18px 0;
+}
+.ratio-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  min-height: 84px;
+  padding: 12px 6px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  text-align: center;
+}
+.ratio-card strong { font-family: var(--font-title); font-size: 1.5rem; }
+.ratio-card span { color: var(--text-dim); font-size: 0.78rem; }
+.mask-ratio { background: rgba(134,195,188,0.08); }
+.mask-ratio strong { color: var(--cyan); }
+.random-ratio { background: rgba(215,173,114,0.08); }
+.random-ratio strong { color: var(--violet); }
+.same-ratio { background: rgba(216,132,112,0.08); }
+.same-ratio strong { color: var(--magenta); }
+.bert-visual .article-takeaway { border-left-color: var(--cyan); background: rgba(134,195,188,0.07); }
+.nsp-example {
+  margin-top: 16px;
+  padding: 13px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.nsp-label { display: block; margin-bottom: 9px; color: var(--text-dim); font-size: 0.76rem; }
+.nsp-example > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.nsp-example > div span, .nsp-example > div strong {
+  padding: 7px 9px;
+  border-radius: 7px;
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  font-size: 0.8rem;
+}
+.nsp-example > div b { color: var(--cyan); }
+.nsp-example > div strong { color: var(--cyan); background: rgba(134,195,188,0.08); }
+
+.t5-visual { border-color: rgba(134,195,188,0.25); }
+.t5-visual .visual-kicker { color: var(--cyan); }
+.span-example { display: grid; gap: 12px; margin: 18px 0 12px; }
+.span-row {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 9px;
+  background: rgba(255,255,255,0.035);
+}
+.span-label { color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase; }
+.span-row p { font-family: var(--font-mono); font-size: clamp(0.82rem, 1vw, 0.95rem); line-height: 1.55; }
+.span-row b { color: var(--magenta); }
+.span-row.corrupted { border: 1px solid rgba(215,173,114,0.22); background: rgba(215,173,114,0.07); }
+.span-row.target { border: 1px solid rgba(134,195,188,0.2); background: rgba(134,195,188,0.06); }
+.span-row.target b { color: var(--cyan); }
+.c4-card {
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 12px;
+  background: rgba(5,6,15,0.45);
+}
+.c4-heading { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.c4-heading strong { color: var(--cyan); font-family: var(--font-title); font-size: 1.6rem; }
+.c4-heading span { color: var(--text-bright); font-size: 0.9rem; }
+.c4-filters { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+.c4-filters span {
+  padding: 5px 9px;
+  border: 1px solid rgba(134,195,188,0.18);
+  border-radius: 999px;
+  background: rgba(134,195,188,0.06);
+  color: var(--cyan);
+  font-size: 0.75rem;
+}
+.c4-card p { color: var(--text-dim); font-size: 0.83rem; line-height: 1.45; }
+
+#slide12 .closing-slide { width: 100%; max-width: 1380px; text-align: center; }
+#slide12 .closing-slide > h2 { margin: 4px 0 8px; }
+#slide12 .evolution-timeline { justify-content: center; overflow: visible; margin: 8px 0 14px; }
+.summary-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.summary-card { padding: 16px; }
+.summary-card strong { color: var(--cyan); font-family: var(--font-title); font-size: 1.05rem; }
+.summary-card p { margin-top: 6px; font-size: 0.9rem; line-height: 1.45; }
+#slide12 .next-steps-grid { margin-top: 14px; }
+#slide12 .closing-thanks { margin-top: 10px; padding: 12px; }
+
+@media (max-height: 800px) and (min-width: 769px) {
+  .article-copy { gap: 10px; }
+  .article-points { gap: 8px; }
+  .article-point { padding: 9px 11px; }
+  .paper-visual { padding: 18px; }
+  .token-prediction { margin-top: 12px; padding: 12px; }
+  .context-sentence { margin: 14px 0 8px; }
+  .mlm-ratios { margin: 12px 0; }
+  .c4-card { margin-top: 12px; padding: 12px; }
+  #slide12 .summary-card { padding: 12px; }
+  #slide12 .next-steps-grid { margin-top: 10px; }
+}
+
+@media (max-width: 768px) {
+  #slide9 .article-layout,
+  #slide10 .article-layout,
+  #slide11 .article-layout { grid-template-columns: 1fr; gap: 18px; }
+  .article-copy { gap: 12px; }
+  .article-point { padding: 12px; }
+  #slide12 .evolution-timeline { justify-content: flex-start; overflow-x: auto; }
+  .summary-cards { grid-template-columns: 1fr; }
+  .nsp-example > div { flex-wrap: wrap; justify-content: flex-start; }
+  #slide1 .cover-content { grid-template-columns: 1fr; gap: 0; }
+  #slide1 .cover-copy { text-align: center; }
+  #slide1 .cover-rule { margin: 12px auto !important; }
+  #slide1 .cover-visual { min-height: 260px; margin-top: -6px; }
+  #slide1 .cover-visual svg { width: min(100%, 360px); }
+  .cover-token { padding: 6px 8px; font-size: 0.62rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ BARRA DE PROGRESSO ═══ -->
+<div class="progress-bar-track" id="progressTrack" role="progressbar" aria-label="Progresso da apresentação" aria-valuenow="8.33" aria-valuemin="0" aria-valuemax="100">
+  <div class="progress-bar-fill" id="progressFill" style="width: 8.33%"></div>
+</div>
+
+<canvas class="agent-canvas" id="agentCanvas" aria-hidden="true"></canvas>
+
+<!-- ═══════════════════════════════════════════
+     SLIDES
+     ═══════════════════════════════════════════ -->
+<div class="slides-wrapper" id="slidesWrapper">
+
+  <!-- ═══ SLIDE 1 — CAPA ═══ -->
+  <section class="slide active" id="slide1" aria-label="Slide 1: Capa" data-phase="cover">
+    <div class="cover-content">
+      <div class="cover-copy">
+        <div class="stagger cover-subtitle">Iniciação Científica · Revisão Bibliográfica</div>
+        <h1 class="stagger"><span class="cover-title">Representação de Conhecimento em Grandes Modelos de Linguagem</span></h1>
+        <div class="cover-rule stagger"></div>
+        <div class="cover-info stagger">
+          <strong>Discente:</strong> Mateus Antunes Belo<br>
+          <strong>Orientadora:</strong> Profa. Adriana Postal<br>
+          <strong>Grupo:</strong> Grupo de Pesquisa em Algoritmos
+        </div>
+        <div class="cover-info stagger" style="margin-top: 4px;">
+          UNIOESTE · Campus Cascavel · CCET · Ciência da Computação<br>
+          <span style="color: var(--text-dim);">Vigência: 01/09/2026 a 31/08/2027</span>
+        </div>
+        <div class="stagger"><span class="token-pill">▁LLM</span></div>
+      </div>
+      <div class="cover-visual stagger" aria-hidden="true">
+        <svg viewBox="0 0 460 340" role="presentation">
+          <defs>
+            <linearGradient id="coverLinkGradient" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stop-color="#32d9f2"/>
+              <stop offset="0.52" stop-color="#a78bfa"/>
+              <stop offset="1" stop-color="#ff5ca8"/>
+            </linearGradient>
+            <radialGradient id="coverCoreGradient">
+              <stop offset="0" stop-color="#7c5cff"/>
+              <stop offset="1" stop-color="#182442"/>
+            </radialGradient>
+          </defs>
+          <g class="cover-network-link">
+            <path d="M75 76 181 145M69 163 174 169M99 264 184 197M164 54 198 127M283 55 253 127M375 94 269 151M390 199 274 184M326 280 259 205M118 307 194 213"/>
+          </g>
+          <g aria-hidden="true">
+            <circle class="cover-network-node node-cyan" cx="75" cy="76" r="9"/>
+            <circle class="cover-network-node node-violet" cx="69" cy="163" r="7"/>
+            <circle class="cover-network-node node-magenta" cx="99" cy="264" r="10"/>
+            <circle class="cover-network-node node-amber" cx="164" cy="54" r="7"/>
+            <circle class="cover-network-node node-cyan" cx="283" cy="55" r="9"/>
+            <circle class="cover-network-node node-magenta" cx="375" cy="94" r="8"/>
+            <circle class="cover-network-node node-violet" cx="390" cy="199" r="10"/>
+            <circle class="cover-network-node node-cyan" cx="326" cy="280" r="7"/>
+            <circle class="cover-network-node node-amber" cx="118" cy="307" r="6"/>
+          </g>
+          <circle class="cover-core" cx="225" cy="170" r="47"/>
+          <text class="cover-core-label" x="225" y="168">LLM</text>
+          <text class="cover-visual-label" x="225" y="235">ATTENTION · PREDICTION</text>
+        </svg>
+        <span class="cover-token token-context">context · "the cat"</span>
+        <span class="cover-token token-embedding">[0.18, −0.42, …]</span>
+        <span class="cover-token token-query">Q · K · V</span>
+        <span class="cover-token token-next">next token →</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 2 — A PESQUISA ═══ -->
+  <section class="slide" id="slide2" aria-label="Slide 2: A Pesquisa" data-phase="intro">
+    <div class="slide-inner">
+      <h2 class="stagger" style="margin-bottom: 8px;">Pergunta de pesquisa</h2>
+      <div class="question-box glass-card stagger">
+        "Como um LLM <span class="accent-cyan">codifica</span>, <span class="accent-violet">armazena</span> e <span class="accent-magenta">recupera</span> conhecimento?"
+      </div>
+      <p class="stagger" style="max-width: 700px; margin: 0 auto; font-size: clamp(0.8rem, 0.95vw, 0.92rem);">
+        <strong style="color:var(--text-bright);">Objetivo:</strong> mapear técnicas que orientem a construção de um LLM do zero.
+      </p>
+      <div class="method-cards stagger">
+        <div class="glass-card method-card">
+          <span class="card-num">01</span>
+          <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><circle cx="21" cy="21" r="12"></circle><path d="m30 30 10 10"></path></svg></span>
+          <h3>Busca</h3>
+          <p>Seleção de artigos + snowballing</p>
+        </div>
+        <div class="glass-card method-card">
+          <span class="card-num">02</span>
+          <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M14 9h17l6 6v26H14z"></path><path d="M31 9v7h6"></path><path d="M20 24h11M20 30h11M20 36h7"></path></svg></span>
+          <h3>Fichamento</h3>
+          <p>Extrair objetivos, métodos e limites</p>
+        </div>
+        <div class="glass-card method-card">
+          <span class="card-num">03</span>
+          <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M10 13c6-3 12-2 14 2v25c-3-4-8-5-14-2z"></path><path d="M24 15c3-4 8-5 14-2v25c-6-3-11-2-14 2z"></path><path d="M16 21h4M29 21h4M16 27h4M29 27h4"></path></svg></span>
+          <h3>Referencial</h3>
+          <p>Organizar conceitos do geral ao específico</p>
+        </div>
+        <div class="glass-card method-card">
+          <span class="card-num">04</span>
+          <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><circle cx="24" cy="12" r="5"></circle><circle cx="12" cy="35" r="5"></circle><circle cx="36" cy="35" r="5"></circle><path d="M21 16 15 30M27 16l6 14M17 35h14"></path></svg></span>
+          <h3>Síntese</h3>
+          <p>Comparar escolhas e identificar lacunas</p>
+        </div>
+      </div>
+      <div class="meta-goal stagger">META FINAL → Embasar a construção de um LLM do zero</div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 3 — ROTEIRO E PROGRESSO ═══ -->
+  <section class="slide" id="slide3" aria-label="Slide 3: Roteiro e Progresso" data-phase="timeline">
+    <div class="slide-inner">
+      <h2 class="stagger" style="text-align:center; margin-bottom: 4px;">Roteiro de Leitura</h2>
+      <p class="stagger" style="text-align:center; margin-bottom: 8px; font-size:0.85rem;">4 fases, 50% concluído</p>
+
+      <div class="timeline-container stagger">
+        <div class="timeline-track"><div class="timeline-fill" id="timelineFill"></div></div>
+        <div class="timeline-phases">
+          <div class="timeline-phase">
+            <div class="phase-dot done">✓</div>
+            <span class="phase-label">Fase 1</span>
+            <span class="phase-years">2003–2018</span>
+            <span style="font-size:0.65rem; color: var(--text-dim); margin-top:2px;">Representações de palavras</span>
+            <span class="phase-status done-badge">CONCLUÍDA ✓</span>
+          </div>
+          <div class="timeline-phase">
+            <div class="phase-dot done">✓</div>
+            <span class="phase-label">Fase 2</span>
+            <span class="phase-years">2017–2020</span>
+            <span style="font-size:0.65rem; color: var(--text-dim); margin-top:2px;">Revolução do Transformer</span>
+            <span class="phase-status done-badge">CONCLUÍDA ✓</span>
+          </div>
+          <div class="timeline-phase">
+            <div class="phase-dot locked">3</div>
+            <span class="phase-label dimmed">Fase 3</span>
+            <span class="phase-years">2020–2022</span>
+            <span style="font-size:0.65rem; color: var(--text-dim); margin-top:2px; opacity:0.5;">Escala e leis de escala</span>
+            <span class="phase-status locked-badge">PRÓXIMA</span>
+          </div>
+          <div class="timeline-phase">
+            <div class="phase-dot locked">4</div>
+            <span class="phase-label dimmed">Fase 4</span>
+            <span class="phase-years">2021–2024</span>
+            <span style="font-size:0.65rem; color: var(--text-dim); margin-top:2px; opacity:0.5;">Interpretabilidade</span>
+            <span class="phase-status locked-badge">PRÓXIMA</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="stagger" style="text-align:center; font-size:0.78rem; color:var(--text-dim); margin-bottom: 6px;">8 artigos estudados:</p>
+      <div class="articles-grid stagger">
+        <span class="article-node">Bengio 2003<span class="tooltip">A Neural Probabilistic Language Model</span></span>
+        <span class="article-node">Word2Vec 2013<span class="tooltip">Efficient Estimation of Word Representations</span></span>
+        <span class="article-node">SentencePiece 2018<span class="tooltip">SentencePiece: Subword Regularization</span></span>
+        <span class="article-node">ELMo 2018<span class="tooltip">Deep Contextualized Word Representations</span></span>
+        <span class="article-node">Transformer 2017<span class="tooltip">Attention Is All You Need</span></span>
+        <span class="article-node">GPT-1 2018<span class="tooltip">Improving Language Understanding by Generative Pre-Training</span></span>
+        <span class="article-node">BERT 2018<span class="tooltip">Pre-training of Deep Bidirectional Transformers</span></span>
+        <span class="article-node">T5 2020<span class="tooltip">Exploring the Limits of Transfer Learning</span></span>
+      </div>
+
+      <div class="progress-50 stagger">
+        <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--cyan);">Progresso geral: <strong id="progressNum">0</strong>%</span>
+        <div class="bar-track"><div class="bar-fill" id="progressBarFill"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 4 — BENGIO 2003 ═══ -->
+  <section class="slide" id="slide4" aria-label="Slide 4: Fase 1 — Bengio 2003" data-phase="phase1">
+    <div class="slide-inner">
+      <div class="content-col">
+        <span class="phase-badge phase1 stagger">Fase 1 · Representações de palavras</span>
+        <h2 class="stagger">Bengio (2003): contexto em vetores</h2>
+        <ul>
+          <li class="stagger"><strong style="color:var(--text-bright);">Abismo semântico:</strong> linguagem ambígua, contexto imprevisível.</li>
+          <li class="stagger"><strong style="color:var(--text-bright);">N-gram:</strong> conta sequências vistas na mesma ordem. Maldição da dimensionalidade — sem noção de similaridade.</li>
+          <li class="stagger"><strong style="color:var(--cyan);">Solução:</strong> representação distribuída — cada palavra vira um <em>vetor</em>; palavras usadas em contextos parecidos ficam próximas.</li>
+          <li class="stagger"><strong style="color:var(--magenta);">Gargalo:</strong> softmax sobre todo o vocabulário tornava o treino muito lento.</li>
+        </ul>
+      </div>
+      <div class="viz-col stagger">
+        <div class="embed-canvas-wrap">
+          <canvas id="embedCanvas"></canvas>
+          <button class="embed-btn" id="embedToggle">▶ Agrupar</button>
+          <span class="embed-canvas-label">Clique para ver o agrupamento semântico</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 5 — WORD2VEC ═══ -->
+  <section class="slide" id="slide5" aria-label="Slide 5: Fase 1 — Word2Vec 2013" data-phase="phase1">
+    <div class="slide-inner">
+      <div class="content-col">
+        <span class="phase-badge phase1 stagger">Fase 1 · Representações de palavras</span>
+        <h2 class="stagger">Word2Vec (Mikolov, 2013)</h2>
+        <ul>
+          <li class="stagger"><strong style="color:var(--text-bright);">Skip-gram:</strong> prevê vizinhas a partir da palavra central.</li>
+          <li class="stagger"><strong style="color:var(--text-bright);">Neg. sampling:</strong> V/F — 1 certa + ~5 falsas sorteadas.</li>
+          <li class="stagger"><strong style="color:var(--text-bright);">Subsampling:</strong> descarta palavras muito frequentes.</li>
+          <li class="stagger">~100 bi palavras (Google News) → <span class="accent-violet">álgebra de vetores</span>.</li>
+          <li class="stagger"><strong style="color:var(--magenta);">Limitação:</strong> vetor único — "manga" é ambígua.</li>
+        </ul>
+        <div class="skipgram-diagram stagger">
+          <div class="sg-context"><span class="sg-word">rápida</span><span class="sg-word">raposa</span></div>
+          <div class="sg-arrows">↑ ↑</div>
+          <div class="sg-center">marrom</div>
+          <div class="sg-arrows">↓ ↓</div>
+          <div class="sg-context"><span class="sg-word">a</span><span class="sg-word">saltou</span></div>
+        </div>
+      </div>
+      <div class="viz-col stagger">
+        <div class="analogy-calc glass-card">
+          <h3 style="font-size:0.85rem; color: var(--violet);">Calculadora de Analogias</h3>
+          <div class="analogy-buttons">
+            <button class="analogy-btn" data-a="Vietnã" data-b="país" data-c="capital" data-r="Hanói">Vietnã + capital</button>
+            <button class="analogy-btn" data-a="Alemanha" data-b="país" data-c="capital" data-r="Berlim">Alemanha + capital</button>
+            <button class="analogy-btn" data-a="rei" data-b="homem" data-c="mulher" data-r="rainha">rei − homem + mulher</button>
+            <button class="analogy-btn" data-a="Paris" data-b="França" data-c="Japão" data-r="Tóquio">Paris − França + Japão</button>
+          </div>
+          <div class="analogy-result" id="analogyResult">
+            <span style="color: var(--text-dim); font-size: 0.8rem;">Clique em uma analogia acima</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 6 — ELMo ═══ -->
+  <section class="slide" id="slide6" aria-label="Slide 6: Fase 1 — ELMo 2018" data-phase="phase1">
+    <div class="slide-inner">
+      <div class="content-col">
+        <span class="phase-badge phase1 stagger">Fase 1 · Representações de palavras</span>
+        <h2 class="stagger">ELMo (Peters et al., 2018)</h2>
+        <ul>
+          <li class="stagger">Fim das coordenadas fixas: o vetor <span class="accent-cyan">muda conforme o contexto</span>.</li>
+          <li class="stagger">Duas LSTMs independentes (esq→dir e dir→esq) combinadas.</li>
+          <li class="stagger">Camadas inferiores → <strong style="color:var(--cyan)">sintaxe</strong>; superiores → <strong style="color:var(--violet)">semântica</strong>.</li>
+          <li class="stagger"><em>Feature-based:</em> pré-treina, congela e usa como entrada de outra arquitetura.</li>
+        </ul>
+      </div>
+      <div class="viz-col stagger">
+        <div class="elmo-demo glass-card">
+          <h3 style="font-size:0.85rem; color: var(--cyan);">Contexto muda o vetor</h3>
+          <div class="elmo-sentences">
+            <button class="elmo-sentence-btn active" data-idx="0">
+              "Comi uma <span class="highlight-word">manga</span> doce"
+            </button>
+            <button class="elmo-sentence-btn" data-idx="1">
+              "A <span class="highlight-word">manga</span> da camisa rasgou"
+            </button>
+          </div>
+          <div style="text-align:center; margin: 8px 0;">
+            <span id="elmoWordLabel" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--cyan);">manga → vetor posição A (fruta)</span>
+          </div>
+          <div class="layers-stack">
+            <div class="layer-bar l-embed"><span class="layer-label">Embedding</span><span class="layer-desc">Representação base da palavra</span></div>
+            <div class="layer-bar l-syntax"><span class="layer-label">Camada 1</span><span class="layer-desc">Sintaxe (estrutura gramatical)</span></div>
+            <div class="layer-bar l-semantic"><span class="layer-label">Camada 2</span><span class="layer-desc">Semântica (fruta ou roupa?)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 7 — SENTENCEPIECE ═══ -->
+  <section class="slide" id="slide7" aria-label="Slide 7: Fase 1 — SentencePiece 2018" data-phase="phase1">
+    <div class="slide-inner">
+      <div class="content-col">
+        <span class="phase-badge phase1 stagger">Fase 1 · Representações de palavras</span>
+        <h2 class="stagger">SentencePiece (Kudo, 2018)</h2>
+        <ul>
+          <li class="stagger"><strong style="color:var(--text-bright);">Problema:</strong> o espaço marca fim de palavra, mas nem todo idioma tem espaço.</li>
+          <li class="stagger"><strong style="color:var(--cyan);">Solução:</strong> fluxo de caracteres brutos — espaço vira <code style="color:var(--cyan);">▁</code>. Divisão por BPE/Unigram, sem dicionário.</li>
+          <li class="stagger">Resolve palavras fora do vocabulário (quebra em pedaços), é <strong style="color:var(--violet)">reversível</strong> e autocontido.</li>
+        </ul>
+      </div>
+      <div class="viz-col stagger">
+        <div class="tokenizer-box glass-card">
+          <h3 style="font-size:0.85rem; color: var(--cyan); margin-bottom: 10px;">Simulador de Tokenização</h3>
+          <input class="tokenizer-input" id="tokenizerInput" type="text" placeholder="Digite uma palavra ou frase..." value="inconstitucionalissimamente" maxlength="80">
+          <div class="tokenizer-output" id="tokenizerOutput"></div>
+          <div class="tokenizer-actions">
+            <button class="tok-btn" id="tokTokenize">Tokenizar</button>
+            <button class="tok-btn" id="tokRevert" style="border-color: rgba(139,92,246,0.3); color: var(--violet);">Reverter</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 8 — TRANSFORMER ═══ -->
+  <section class="slide" id="slide8" aria-label="Slide 8: Fase 2 — Transformer 2017" data-phase="phase2">
+    <div class="slide-inner">
+      <div class="content-col">
+        <span class="phase-badge phase2 stagger">Fase 2 · Revolução do Transformer</span>
+        <h2 class="stagger">Transformer (Vaswani, 2017)</h2>
+        <ul>
+          <li class="stagger"><strong style="color:var(--text-bright);">Antes:</strong> RNNs liam palavra por palavra — gargalo sequencial + amnésia.</li>
+          <li class="stagger"><strong style="color:var(--violet);">Autoatenção:</strong> cruza TODAS as palavras ao mesmo tempo, em paralelo.</li>
+          <li class="stagger"><strong style="color:var(--violet);">Multi-head:</strong> cada cabeça aprende uma função diferente.</li>
+          <li class="stagger"><strong style="color:var(--cyan);">Posicional encoding:</strong> "carimbo de posição" em ondas senoidais.</li>
+        </ul>
+        <div class="wave-compare stagger">
+          <div class="wave-box">
+            <h4>RNN — Sequencial</h4>
+            <canvas id="rnnWaveCanvas" width="200" height="50"></canvas>
+          </div>
+          <div class="wave-box">
+            <h4>Transformer — Paralelo</h4>
+            <canvas id="tfWaveCanvas" width="200" height="50"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="viz-col stagger">
+        <div class="attn-heatmap-wrap glass-card">
+          <h3 style="font-size:0.85rem; color: var(--violet); margin-bottom: 8px;">Mapa de Atenção</h3>
+          <p style="font-size:0.7rem; margin-bottom:8px;">Passe o mouse nas palavras:</p>
+          <div class="attn-sentence" id="attnSentence"></div>
+          <div class="attn-grid" id="attnGrid"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 9 — GPT-1 ═══ -->
+  <section class="slide" id="slide9" aria-label="Slide 9: GPT-1 e pré-treinamento generativo" data-phase="phase2">
+    <div class="slide-inner article-layout">
+      <div class="article-copy">
+        <span class="phase-badge phase2 stagger">Fase 2 · Aprender a gerar</span>
+        <h2 class="stagger">GPT-1: prever o próximo token</h2>
+        <p class="article-lead stagger">Como aproveitar grandes volumes de texto sem depender de rótulos feitos por pessoas?</p>
+        <div class="article-points stagger">
+          <article class="article-point">
+            <span class="point-index">01</span>
+            <div>
+              <h3>Pré-treinamento autossupervisionado</h3>
+              <p>O modelo lê trechos do BooksCorpus e tenta prever o próximo token. O próprio texto fornece o alvo de treino: não é preciso rotular cada exemplo.</p>
+            </div>
+          </article>
+          <article class="article-point">
+            <span class="point-index">02</span>
+            <div>
+              <h3>Depois, fine-tuning supervisionado</h3>
+              <p>Parte-se dos pesos pré-treinados e ajusta-se o modelo com exemplos rotulados para uma tarefa, como classificação. O conhecimento geral vira ponto de partida, não resposta pronta.</p>
+            </div>
+          </article>
+          <article class="article-point">
+            <span class="point-index">03</span>
+            <div>
+              <h3>Máscara causal: sem olhar adiante</h3>
+              <p>A atenção causal impede que cada posição veja tokens futuros. Isso permite gerar em sequência, mas limita tarefas que dependem do final da frase para resolver uma ambiguidade.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+      <div class="paper-visual glass-card stagger">
+        <div class="visual-kicker">Decoder Transformer · GPT-1</div>
+        <div class="decoder-stack" aria-label="Representação das 12 camadas do GPT-1">
+          <span>12</span><span>11</span><span>10</span><span>09</span><span>08</span><span>07</span>
+          <span>06</span><span>05</span><span>04</span><span>03</span><span>02</span><span>01</span>
+        </div>
+        <p class="visual-caption">12 camadas · atenção mascarada</p>
+        <div class="token-prediction">
+          <div class="token-label">Contexto disponível</div>
+          <div class="token-stream"><span>O</span><span>gato</span><span>sentou</span><span>no</span></div>
+          <div class="prediction-arrow">↓ prevê o próximo token</div>
+          <div class="predicted-token">tapete</div>
+          <div class="hidden-future"><span>azul</span><span>da sala</span><small>futuro ainda não lido</small></div>
+        </div>
+        <div class="article-takeaway"><strong>Em uma linha:</strong> cada token seguinte vira um alvo de treino, sem anotação manual.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 10 — BERT ═══ -->
+  <section class="slide" id="slide10" aria-label="Slide 10: BERT e leitura bidirecional" data-phase="phase2">
+    <div class="slide-inner article-layout">
+      <div class="article-copy">
+        <span class="phase-badge phase2 stagger">Fase 2 · Compreender nos dois sentidos</span>
+        <h2 class="stagger">BERT: contexto dos dois lados</h2>
+        <p class="article-lead stagger">Em vez de gerar a próxima palavra, o encoder aprende representações usando o contexto à esquerda e à direita.</p>
+        <div class="article-points stagger">
+          <article class="article-point">
+            <span class="point-index">01</span>
+            <div>
+              <h3>MLM — prever palavras mascaradas</h3>
+              <p>Selecionam-se 15% das posições e o modelo tenta recuperar os tokens originais. Como vê os dois lados, pode usar o restante da frase para desambiguar o alvo.</p>
+            </div>
+          </article>
+          <article class="article-point">
+            <span class="point-index">02</span>
+            <div>
+              <h3>Por que variar a corrupção?</h3>
+              <p>Dos selecionados, 80% viram <code>[MASK]</code>, 10% recebem um token aleatório e 10% ficam iguais. Assim, o modelo não pode depender apenas do marcador que quase não aparece no ajuste final.</p>
+            </div>
+          </article>
+          <article class="article-point">
+            <span class="point-index">03</span>
+            <div>
+              <h3>NSP e o limite do encoder</h3>
+              <p>O NSP pergunta se uma frase vem depois da outra; trabalhos posteriores como RoBERTa mostraram que essa tarefa não era necessária naquele regime de treino. BERT é forte em compreensão, mas cada tarefa exige ajuste próprio e ele não gera texto naturalmente.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+      <div class="paper-visual bert-visual glass-card stagger">
+        <div class="visual-kicker">Masked Language Modeling · MLM</div>
+        <div class="context-sentence">
+          <span>O</span><span>gato</span><strong>[MASK]</strong><span>no</span><span>tapete</span><span>da</span><span>sala</span>
+        </div>
+        <p class="visual-caption">Exemplo: 1 de 7 posições (≈15%); o alvo recebe contexto dos dois lados.</p>
+        <div class="mlm-ratios">
+          <div class="ratio-card mask-ratio"><strong>80%</strong><span>[MASK]</span></div>
+          <div class="ratio-card random-ratio"><strong>10%</strong><span>token aleatório</span></div>
+          <div class="ratio-card same-ratio"><strong>10%</strong><span>token original</span></div>
+        </div>
+        <div class="article-takeaway"><strong>Objetivo:</strong> prever o token original nas posições selecionadas, não a frase seguinte inteira.</div>
+        <div class="nsp-example">
+          <span class="nsp-label">Tarefa adicional · NSP</span>
+          <div><span>Frase A</span><b>+</b><span>Frase B</span><b>→</b><strong>continua?</strong></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 11 — T5 ═══ -->
+  <section class="slide" id="slide11" aria-label="Slide 11: T5, span corruption e C4" data-phase="phase2">
+    <div class="slide-inner article-layout">
+      <div class="article-copy">
+        <span class="phase-badge phase2 stagger">Fase 2 · Uma tarefa para tudo</span>
+        <h2 class="stagger">T5: texto entra, texto sai</h2>
+        <p class="article-lead stagger">Com encoder e decoder, tradução, resumo e perguntas e respostas podem compartilhar o mesmo formato de entrada e saída.</p>
+        <div class="article-points stagger">
+          <article class="article-point">
+            <span class="point-index">01</span>
+            <div>
+              <h3>Compararam objetivos e escalas</h3>
+              <p>O estudo do T5 avaliou objetivos, dados, arquitetura e escala. A conclusão foi que o pré-treino por span corruption é uma forma eficaz de ensinar o modelo a reconstruir texto.</p>
+            </div>
+          </article>
+          <article class="article-point">
+            <span class="point-index">02</span>
+            <div>
+              <h3>Escala exige dados bem preparados</h3>
+              <p>A maior variante chegou a 11 bilhões de parâmetros e precisava de muitos dados para generalizar. A equipe montou o C4 a partir do Common Crawl para treinar em texto em inglês mais limpo e contínuo.</p>
+            </div>
+          </article>
+        </div>
+        <div class="article-takeaway stagger"><strong>Resultado:</strong> o T5 alcançou resultados de ponta nos benchmarks GLUE, SuperGLUE e SQuAD avaliados no estudo.</div>
+      </div>
+      <div class="paper-visual t5-visual glass-card stagger">
+        <div class="visual-kicker">Span corruption · reconstruir trechos</div>
+        <div class="span-example">
+          <div class="span-row">
+            <span class="span-label">Original</span>
+            <p>O gato correu pelo jardim depois da chuva.</p>
+          </div>
+          <div class="span-row corrupted">
+            <span class="span-label">Entrada</span>
+            <p>O gato <b>&lt;extra_id_0&gt;</b> jardim <b>&lt;extra_id_1&gt;</b> chuva.</p>
+          </div>
+          <div class="span-row target">
+            <span class="span-label">Alvo</span>
+            <p><b>&lt;extra_id_0&gt;</b> correu pelo <b>&lt;extra_id_1&gt;</b> depois da</p>
+          </div>
+        </div>
+        <p class="visual-caption">Trechos contíguos são removidos e reconstruídos na ordem, com marcadores sentinela.</p>
+        <div class="c4-card">
+          <div class="c4-heading"><strong>C4</strong><span>Colossal Clean Crawled Corpus</span></div>
+          <div class="c4-filters"><span>Pontuação</span><span>Sem código</span><span>Deduplicação</span><span>Filtros de conteúdo</span></div>
+          <p>Foram removidos código, páginas com termos ofensivos e duplicatas; entraram sentenças em inglês terminadas em pontuação.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 12 — SÍNTESE E PRÓXIMOS PASSOS ═══ -->
+  <section class="slide" id="slide12" aria-label="Slide 12: Síntese e próximos passos" data-phase="phase2">
+    <div class="slide-inner closing-slide">
+      <span class="phase-badge phase2 stagger">Síntese · Da representação à geração</span>
+      <h2 class="stagger">Três escolhas que moldaram os LLMs</h2>
+      <div class="evolution-timeline stagger" id="evoTimeline"></div>
+      <div class="summary-cards stagger">
+        <div class="glass-card summary-card"><strong>Transformer</strong><p>trocou leitura sequencial por atenção paralela.</p></div>
+        <div class="glass-card summary-card"><strong>GPT-1</strong><p>usou o próximo token como rótulo criado pelo próprio texto.</p></div>
+        <div class="glass-card summary-card"><strong>BERT → T5</strong><p>exploraram contexto bidirecional e uma interface comum para tarefas.</p></div>
+      </div>
+      <div class="next-steps-grid stagger">
+        <div class="glass-card next-step-card done-card">
+          <h4>Concluído · Fases 1 e 2</h4>
+          <p>8 artigos estudados, de Bengio (2003) ao T5 (2020).</p>
+        </div>
+        <div class="glass-card next-step-card pending-card">
+          <h4>Próximos · Fases 3 e 4</h4>
+          <p>Escala, Chinchilla, memórias e interpretabilidade; depois, síntese e redação do referencial.</p>
+        </div>
+      </div>
+      <div class="closing-thanks stagger">
+        <h2>Obrigado! Perguntas?</h2>
+        <p><strong>Mateus Antunes Belo</strong> · Orientadora: <strong>Profa. Adriana Postal</strong></p>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /slides-wrapper -->
+
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════════ -->
+<script>
+(function() {
+'use strict';
+
+/* ═══════════════════════════════════════════
+   CONSTANTES E ESTADO
+   ═══════════════════════════════════════════ */
+const TOTAL_SLIDES = 12;
+let current = 0;
+let transitionState = null;
+let suppressClickUntil = 0;
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const slides = Array.from(document.querySelectorAll('.slide'));
+const progressFill = document.getElementById('progressFill');
+const progressTrack = document.getElementById('progressTrack');
+const agentCanvas = document.getElementById('agentCanvas');
+const agentCtx = agentCanvas.getContext('2d');
+const BUILD_ITEM_SELECTOR = '.stagger,.glass-card,.article-point,.summary-card,.evo-node,.article-node,.token-chip,.attn-word,.layer-bar,.sg-word,.sg-center,.sg-arrows,.sg-context,.article-takeaway,.paper-visual,.cover-visual,.method-card,.next-step-card,.question-box,.content-col,.viz-col,.cover-copy';
+const PHASE1_AGENT_COLORS = ['#32d9f2', '#38bdf8', '#2dd4bf', '#a3e635', '#ffc857', '#fb923c', '#c084fc', '#fb7185'];
+const PHASE2_AGENT_COLORS = ['#a78bfa', '#c084fc', '#f472b6', '#fb7185', '#818cf8', '#34d399', '#ffc857', '#22d3ee'];
+const TEARDOWN_DURATION = 380;
+const AGENT_FLIGHT_DURATION = 380;
+const AGENT_VISIT_INTERVAL = 340;
+const FINALE_DURATION = 180;
+
+if (!agentCtx) throw new Error('Canvas 2D context is unavailable for slide transitions.');
+
+function resizeAgentCanvas() {
+  const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+  agentCanvas.width = Math.round(window.innerWidth * pixelRatio);
+  agentCanvas.height = Math.round(window.innerHeight * pixelRatio);
+  agentCtx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+}
+resizeAgentCanvas();
+
+function clearAgentCanvas() {
+  agentCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+}
+
+function getBuildCandidates(slide) {
+  const candidates = Array.from(slide.querySelectorAll(BUILD_ITEM_SELECTOR));
+  const candidateSet = new Set(candidates);
+  return candidates.filter(item =>
+    !Array.from(item.querySelectorAll(BUILD_ITEM_SELECTOR)).some(child => candidateSet.has(child))
+  );
+}
+
+function configureBuildItems(slide) {
+  const items = getBuildCandidates(slide);
+  const agentCount = Math.min(8, Math.max(5, items.length));
+  const colors = slide.dataset.phase === 'phase2' ? PHASE2_AGENT_COLORS : PHASE1_AGENT_COLORS;
+
+  items.forEach((item, index) => {
+    const agentIndex = index % agentCount;
+    item.classList.add('build-item');
+    item.dataset.agent = String(agentIndex + 1);
+    item.style.setProperty('--build-color', colors[agentIndex % colors.length]);
+  });
+
+  return { items, agentCount, colors };
+}
+
+function clearBuildItemState(slide) {
+  slide.querySelectorAll('.build-item').forEach(item => {
+    item.classList.remove('build-wireframe', 'build-reveal', 'build-tearing-down');
+    item.querySelectorAll('.build-stroke').forEach(shape => {
+      shape.classList.remove('build-stroke');
+      shape.style.removeProperty('--stroke-length');
+      shape.style.removeProperty('--stroke-delay');
+    });
+  });
+}
+
+function clearSlideTransitionClasses(slide) {
+  slide.classList.remove('tearing-down', 'building', 'reduced-transition');
+  clearBuildItemState(slide);
+}
+
+function setSlideInert(slide, inert) {
+  slide.inert = inert;
+  if (inert) slide.setAttribute('aria-hidden', 'true');
+  else slide.removeAttribute('aria-hidden');
+}
+
+function prepareSvgStrokes(item) {
+  const shapes = item.querySelectorAll('svg path, svg line, svg polyline, svg polygon, svg circle, svg rect');
+  shapes.forEach((shape, index) => {
+    if (typeof shape.getTotalLength !== 'function') return;
+    const length = shape.getTotalLength();
+    if (!Number.isFinite(length) || length <= 0) return;
+    shape.classList.add('build-stroke');
+    shape.style.setProperty('--stroke-length', String(length));
+    shape.style.setProperty('--stroke-delay', `${Math.min(index * 16, 120)}ms`);
+  });
+}
+
+function statusForItem(item) {
+  if (item.matches('h1, h2, .cover-subtitle')) return 'escrevendo título…';
+  if (item.matches('.glass-card, .article-point, .summary-card, .method-card, .next-step-card')) return 'posicionando card…';
+  if (item.querySelector('svg, canvas') || item.matches('.viz-col, .paper-visual, .attn-grid')) return 'renderizando gráfico…';
+  if (item.matches('p, li, .article-lead')) return 'ajustando texto…';
+  if (item.matches('.article-node, .token-chip, .sg-word')) return 'alinhando tokens…';
+  return 'ajustando layout…';
+}
+
+function makeTeardownFragments(items) {
+  const fragments = [];
+  items.forEach(item => {
+    const rect = item.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const color = item.style.getPropertyValue('--build-color') || '#32d9f2';
+    const count = Math.max(2, Math.min(5, Math.round(rect.width * rect.height / 22000)));
+    for (let index = 0; index < count; index++) {
+      fragments.push({
+        x: rect.left + Math.random() * rect.width,
+        y: rect.top + Math.random() * rect.height,
+        size: 2 + Math.random() * 4,
+        color,
+        angle: Math.random() * Math.PI * 2,
+        drift: 8 + Math.random() * 34
+      });
+    }
+  });
+  return fragments;
+}
+
+function easeInOutCubic(value) {
+  return value < 0.5
+    ? 4 * value * value * value
+    : 1 - Math.pow(-2 * value + 2, 3) / 2;
+}
+
+function easeOutCubic(value) {
+  return 1 - Math.pow(1 - value, 3);
+}
+
+function drawTeardownFragments(tx, now) {
+  clearAgentCanvas();
+  const progress = Math.min(1, (now - tx.startTime) / tx.teardownDuration);
+  const eased = easeInOutCubic(progress);
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
+  agentCtx.save();
+  tx.fragments.forEach(fragment => {
+    const x = fragment.x + (centerX - fragment.x) * eased + Math.cos(fragment.angle) * fragment.drift * progress;
+    const y = fragment.y + (centerY - fragment.y) * eased + Math.sin(fragment.angle) * fragment.drift * progress;
+    agentCtx.globalAlpha = 1 - progress;
+    agentCtx.fillStyle = fragment.color;
+    agentCtx.shadowColor = fragment.color;
+    agentCtx.shadowBlur = 12;
+    agentCtx.fillRect(x, y, fragment.size * (1 - progress * 0.5), fragment.size * (1 - progress * 0.5));
+  });
+  agentCtx.restore();
+}
+
+function getAgentEntry(agentIndex, slideIndex) {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const side = (agentIndex + slideIndex) % 4;
+  const offset = ((agentIndex * 37) % 70) / 100;
+  if (side === 0) return { x: -28, y: height * (0.15 + offset * 0.7) };
+  if (side === 1) return { x: width + 28, y: height * (0.15 + offset * 0.7) };
+  if (side === 2) return { x: width * (0.12 + offset * 0.76), y: -28 };
+  return { x: width * (0.12 + offset * 0.76), y: height + 28 };
+}
+
+function makeAgentPlans(items, agentCount, colors, slideIndex) {
+  const agents = Array.from({ length: agentCount }, (_, index) => ({
+    index,
+    color: colors[index % colors.length],
+    entry: getAgentEntry(index, slideIndex),
+    jobs: [],
+    trail: [],
+    position: null
+  }));
+  const previousTargets = Array(agentCount).fill(null);
+
+  items.forEach(item => {
+    const agentIndex = (Number(item.dataset.agent) - 1) % agentCount;
+    const agent = agents[agentIndex];
+    const rect = item.getBoundingClientRect();
+    const target = {
+      x: Math.max(18, Math.min(window.innerWidth - 18, rect.left + rect.width / 2)),
+      y: Math.max(32, Math.min(window.innerHeight - 32, rect.top + rect.height / 2))
+    };
+    const from = previousTargets[agentIndex] || agent.entry;
+    const dx = target.x - from.x;
+    const dy = target.y - from.y;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const bend = (agentIndex % 2 === 0 ? -1 : 1) * (46 + (agentIndex % 3) * 18);
+    const control = {
+      x: (from.x + target.x) / 2 - (dy / distance) * bend,
+      y: (from.y + target.y) / 2 + (dx / distance) * bend
+    };
+    const visit = agent.jobs.length;
+    agent.jobs.push({
+      item,
+      target,
+      from,
+      control,
+      startOffset: agentIndex * 55 + visit * AGENT_VISIT_INTERVAL,
+      duration: AGENT_FLIGHT_DURATION,
+      status: statusForItem(item),
+      completed: false
+    });
+    previousTargets[agentIndex] = target;
+  });
+
+  return agents;
+}
+
+function quadraticPoint(job, progress) {
+  const t = easeInOutCubic(Math.max(0, Math.min(1, progress)));
+  const inverse = 1 - t;
+  return {
+    x: inverse * inverse * job.from.x + 2 * inverse * t * job.control.x + t * t * job.target.x,
+    y: inverse * inverse * job.from.y + 2 * inverse * t * job.control.y + t * t * job.target.y
+  };
+}
+
+function drawRoundedRect(context, x, y, width, height, radius) {
+  const r = Math.min(radius, width / 2, height / 2);
+  context.beginPath();
+  context.moveTo(x + r, y);
+  context.lineTo(x + width - r, y);
+  context.arcTo(x + width, y, x + width, y + r, r);
+  context.lineTo(x + width, y + height - r);
+  context.arcTo(x + width, y + height, x + width - r, y + height, r);
+  context.lineTo(x + r, y + height);
+  context.arcTo(x, y + height, x, y + height - r, r);
+  context.lineTo(x, y + r);
+  context.arcTo(x, y, x + r, y, r);
+  context.closePath();
+}
+
+function drawAgentPath(agent, job, progress) {
+  const context = agentCtx;
+  context.save();
+  context.beginPath();
+  context.moveTo(job.from.x, job.from.y);
+  context.quadraticCurveTo(job.control.x, job.control.y, job.target.x, job.target.y);
+  context.globalAlpha = 0.12;
+  context.strokeStyle = agent.color;
+  context.lineWidth = 1;
+  context.stroke();
+
+  const t = easeInOutCubic(Math.max(0, Math.min(1, progress)));
+  const partialControl = {
+    x: job.from.x + (job.control.x - job.from.x) * t,
+    y: job.from.y + (job.control.y - job.from.y) * t
+  };
+  const point = quadraticPoint(job, progress);
+  context.beginPath();
+  context.moveTo(job.from.x, job.from.y);
+  context.quadraticCurveTo(partialControl.x, partialControl.y, point.x, point.y);
+  context.globalAlpha = 0.9;
+  context.strokeStyle = agent.color;
+  context.lineWidth = 2;
+  context.shadowColor = agent.color;
+  context.shadowBlur = 14;
+  context.stroke();
+  context.restore();
+}
+
+function drawAgentTrail(agent) {
+  const context = agentCtx;
+  for (let index = 1; index < agent.trail.length; index++) {
+    const previous = agent.trail[index - 1];
+    const point = agent.trail[index];
+    context.beginPath();
+    context.moveTo(previous.x, previous.y);
+    context.lineTo(point.x, point.y);
+    context.globalAlpha = index / agent.trail.length * 0.48;
+    context.strokeStyle = agent.color;
+    context.lineWidth = 1 + index / agent.trail.length * 2;
+    context.shadowColor = agent.color;
+    context.shadowBlur = 12;
+    context.stroke();
+  }
+}
+
+function drawAgentCursor(agent, point, alpha) {
+  const context = agentCtx;
+  context.save();
+  context.globalAlpha = alpha;
+  context.fillStyle = agent.color;
+  context.strokeStyle = '#ffffff';
+  context.lineWidth = 1;
+  context.shadowColor = agent.color;
+  context.shadowBlur = 18;
+  context.beginPath();
+  context.moveTo(point.x, point.y);
+  context.lineTo(point.x + 12, point.y + 7);
+  context.lineTo(point.x + 6, point.y + 9);
+  context.lineTo(point.x + 9, point.y + 16);
+  context.lineTo(point.x + 6, point.y + 18);
+  context.lineTo(point.x + 3, point.y + 11);
+  context.lineTo(point.x, point.y + 15);
+  context.closePath();
+  context.fill();
+  context.stroke();
+  context.beginPath();
+  context.arc(point.x, point.y, 3, 0, Math.PI * 2);
+  context.fillStyle = '#ffffff';
+  context.fill();
+  context.restore();
+}
+
+function drawAgentLabel(agent, point, status) {
+  const context = agentCtx;
+  const width = 158;
+  const height = 37;
+  const x = Math.max(8, Math.min(window.innerWidth - width - 8, point.x + 15));
+  const y = Math.max(20, Math.min(window.innerHeight - height - 12, point.y - 46));
+  context.save();
+  context.globalAlpha = 0.96;
+  context.fillStyle = 'rgba(8,13,30,0.94)';
+  context.strokeStyle = agent.color;
+  context.lineWidth = 1;
+  context.shadowColor = agent.color;
+  context.shadowBlur = 12;
+  drawRoundedRect(context, x, y, width, height, 8);
+  context.fill();
+  context.stroke();
+  context.shadowBlur = 0;
+  context.fillStyle = agent.color;
+  context.font = '700 10px "Cascadia Code", Consolas, monospace';
+  context.textBaseline = 'top';
+  context.fillText(`Agent-${String(agent.index + 1).padStart(2, '0')}`, x + 9, y + 6);
+  context.fillStyle = '#d6def3';
+  context.font = '10px "Cascadia Code", Consolas, monospace';
+  context.fillText(status, x + 9, y + 21, width - 18);
+  context.restore();
+}
+
+function drawBuildFlash(flash, now) {
+  const progress = Math.min(1, (now - flash.start) / 220);
+  const alpha = 1 - progress;
+  agentCtx.save();
+  agentCtx.globalAlpha = alpha;
+  agentCtx.strokeStyle = flash.color;
+  agentCtx.shadowColor = flash.color;
+  agentCtx.shadowBlur = 14;
+  agentCtx.lineWidth = 2;
+  agentCtx.beginPath();
+  agentCtx.arc(flash.x, flash.y, 4 + progress * 18, 0, Math.PI * 2);
+  agentCtx.stroke();
+  agentCtx.restore();
+}
+
+function revealBuildItem(item, tx, now) {
+  if (item.classList.contains('build-reveal')) return;
+  item.classList.remove('build-wireframe', 'build-tearing-down');
+  item.classList.add('build-reveal');
+  const rect = item.getBoundingClientRect();
+  tx.flashes.push({
+    x: Math.max(12, Math.min(window.innerWidth - 12, rect.left + rect.width / 2)),
+    y: Math.max(12, Math.min(window.innerHeight - 12, rect.top + rect.height / 2)),
+    color: item.style.getPropertyValue('--build-color') || '#32d9f2',
+    start: now
+  });
+}
+
+function drawBuildScene(tx, now) {
+  clearAgentCanvas();
+  const elapsed = now - tx.buildStart;
+
+  tx.agents.forEach(agent => {
+    if (!agent.jobs.length) return;
+    let activeJobIndex = -1;
+    agent.jobs.forEach((job, index) => {
+      if (elapsed >= job.startOffset) activeJobIndex = index;
+    });
+    if (activeJobIndex < 0) return;
+
+    const job = agent.jobs[activeJobIndex];
+    const progress = Math.max(0, Math.min(1, (elapsed - job.startOffset) / job.duration));
+    const point = quadraticPoint(job, progress);
+    agent.position = point;
+    agent.trail.push(point);
+    if (agent.trail.length > 12) agent.trail.shift();
+    drawAgentPath(agent, job, progress);
+    drawAgentTrail(agent);
+    drawAgentCursor(agent, point, progress < 1 ? 1 : 0.8);
+    drawAgentLabel(agent, point, job.status);
+  });
+
+  tx.agents.forEach(agent => {
+    agent.jobs.forEach(job => {
+      if (!job.completed && elapsed >= job.startOffset + job.duration) {
+        job.completed = true;
+        revealBuildItem(job.item, tx, now);
+      }
+    });
+  });
+  tx.flashes.forEach(flash => drawBuildFlash(flash, now));
+  tx.flashes = tx.flashes.filter(flash => now - flash.start < 220);
+}
+
+function createDissolveParticles(agents) {
+  const center = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  return agents.flatMap(agent => {
+    const origin = agent.position || agent.entry;
+    return Array.from({ length: 7 }, () => {
+      const angle = Math.random() * Math.PI * 2;
+      const radius = 36 + Math.random() * 120;
+      return {
+        from: origin,
+        to: { x: center.x + Math.cos(angle) * radius, y: center.y + Math.sin(angle) * radius },
+        color: agent.color,
+        size: 1.5 + Math.random() * 2.5
+      };
+    });
+  });
+}
+
+function drawFinale(tx, now) {
+  clearAgentCanvas();
+  const progress = Math.min(1, (now - tx.finaleStart) / FINALE_DURATION);
+  const alpha = 1 - progress;
+  const nodes = tx.agents.map(agent => agent.position || agent.entry);
+  const center = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+
+  agentCtx.save();
+  nodes.forEach((node, index) => {
+    const next = nodes[(index + 1) % nodes.length];
+    agentCtx.globalAlpha = alpha * 0.38;
+    agentCtx.strokeStyle = tx.agents[index].color;
+    agentCtx.lineWidth = 1;
+    agentCtx.beginPath();
+    agentCtx.moveTo(node.x, node.y);
+    agentCtx.lineTo(center.x, center.y);
+    agentCtx.lineTo(next.x, next.y);
+    agentCtx.stroke();
+    agentCtx.globalAlpha = alpha;
+    agentCtx.fillStyle = tx.agents[index].color;
+    agentCtx.shadowColor = tx.agents[index].color;
+    agentCtx.shadowBlur = 16;
+    agentCtx.beginPath();
+    agentCtx.arc(node.x, node.y, 5 + Math.sin(progress * Math.PI * 2) * 3, 0, Math.PI * 2);
+    agentCtx.fill();
+  });
+
+  tx.particles.forEach(particle => {
+    const eased = easeOutCubic(progress);
+    const x = particle.from.x + (particle.to.x - particle.from.x) * eased;
+    const y = particle.from.y + (particle.to.y - particle.from.y) * eased;
+    agentCtx.globalAlpha = alpha;
+    agentCtx.fillStyle = particle.color;
+    agentCtx.shadowColor = particle.color;
+    agentCtx.shadowBlur = 14;
+    agentCtx.fillRect(x, y, particle.size, particle.size);
+  });
+  agentCtx.restore();
+}
+
+function beginAssembly(tx, now, animate) {
+  if (tx.activated) return;
+  tx.oldSlide.classList.remove('active', 'tearing-down', 'reduced-transition');
+  clearBuildItemState(tx.targetSlide);
+  setSlideInert(tx.targetSlide, true);
+  tx.targetSlide.classList.add('active');
+  if (animate) tx.targetSlide.classList.add('building');
+  else if (reducedMotion) tx.targetSlide.classList.add('reduced-transition');
+  void tx.targetSlide.offsetWidth;
+
+  current = tx.targetIndex;
+  updateUI();
+  triggerSlideInteractions(current);
+  const build = configureBuildItems(tx.targetSlide);
+  tx.items = build.items.filter(item => {
+    const rect = item.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  });
+  tx.activated = true;
+
+  if (!animate) {
+    tx.phase = reducedMotion ? 'reduced-enter' : 'finale';
+    tx.finishAt = now + (reducedMotion ? 120 : 0);
+    return;
+  }
+
+  tx.items.forEach(item => {
+    item.classList.add('build-wireframe');
+    prepareSvgStrokes(item);
+  });
+  tx.agents = makeAgentPlans(tx.items, build.agentCount, build.colors, tx.targetIndex);
+  const maxJobEnd = tx.agents.reduce((maximum, agent) =>
+    Math.max(maximum, ...agent.jobs.map(job => job.startOffset + job.duration)), 0
+  );
+  tx.buildStart = now;
+  tx.buildEnd = now + maxJobEnd + 350;
+  tx.flashes = [];
+  tx.phase = 'building';
+  agentCanvas.classList.add('active');
+}
+
+function completeTransition(tx, skipAnimation) {
+  if (!tx.activated) beginAssembly(tx, performance.now(), false);
+  tx.items.forEach(item => {
+    item.classList.remove('build-wireframe', 'build-tearing-down');
+    if (skipAnimation) {
+      item.classList.remove('build-reveal');
+      item.querySelectorAll('.build-stroke').forEach(shape => {
+        shape.classList.remove('build-stroke');
+        shape.style.removeProperty('--stroke-length');
+        shape.style.removeProperty('--stroke-delay');
+      });
+    } else if (!item.classList.contains('build-reveal')) {
+      item.classList.add('build-reveal');
+    }
+  });
+  tx.oldSlide.classList.remove('active', 'tearing-down', 'building', 'reduced-transition');
+  tx.targetSlide.classList.remove('building', 'reduced-transition');
+  tx.targetSlide.classList.add('active');
+  setSlideInert(tx.oldSlide, true);
+  setSlideInert(tx.targetSlide, false);
+  clearBuildItemState(tx.oldSlide);
+  if (tx.rafId) cancelAnimationFrame(tx.rafId);
+  agentCanvas.classList.remove('active');
+  clearAgentCanvas();
+  transitionState = null;
+}
+
+function finishTransition() {
+  if (!transitionState) return;
+  const tx = transitionState;
+  if (tx.rafId) cancelAnimationFrame(tx.rafId);
+  if (!tx.activated) beginAssembly(tx, performance.now(), false);
+  completeTransition(tx, true);
+}
+
+function transitionFrame(now) {
+  const tx = transitionState;
+  if (!tx) return;
+
+  if (tx.phase === 'teardown') {
+    if (!reducedMotion) drawTeardownFragments(tx, now);
+    if (now - tx.startTime >= tx.teardownDuration) {
+      beginAssembly(tx, now, !reducedMotion);
+    }
+  } else if (tx.phase === 'building') {
+    drawBuildScene(tx, now);
+    if (now >= tx.buildEnd) {
+      tx.phase = 'finale';
+      tx.finaleStart = now;
+      tx.finishAt = now + FINALE_DURATION;
+      tx.particles = createDissolveParticles(tx.agents);
+    }
+  } else if (tx.phase === 'finale') {
+    if (tx.agents && tx.agents.length) drawFinale(tx, now);
+    if (now >= tx.finishAt) completeTransition(tx, false);
+  } else if (tx.phase === 'reduced-enter' && now >= tx.finishAt) {
+    completeTransition(tx, false);
+  }
+
+  if (transitionState) tx.rafId = requestAnimationFrame(transitionFrame);
+}
+
+/* ═══════════════════════════════════════════
+   IR PARA SLIDE
+   ═══════════════════════════════════════════ */
+function goToSlide(idx) {
+  if (transitionState) {
+    finishTransition();
+    return;
+  }
+  if (idx === current || idx < 0 || idx >= TOTAL_SLIDES) return;
+
+  const oldSlide = slides[current];
+  clearSlideTransitionClasses(oldSlide);
+  const oldBuild = configureBuildItems(oldSlide);
+  const tx = {
+    oldIndex: current,
+    targetIndex: idx,
+    oldSlide,
+    targetSlide: slides[idx],
+    items: [],
+    agents: [],
+    fragments: reducedMotion ? [] : makeTeardownFragments(oldBuild.items),
+    phase: 'teardown',
+    startTime: performance.now(),
+    teardownDuration: reducedMotion ? 120 : TEARDOWN_DURATION,
+    rafId: 0,
+    activated: false
+  };
+
+  if (reducedMotion) {
+    setSlideInert(oldSlide, true);
+    oldSlide.classList.add('reduced-transition');
+    void oldSlide.offsetWidth;
+    oldSlide.classList.remove('active');
+  } else {
+    setSlideInert(oldSlide, true);
+    oldSlide.classList.add('tearing-down');
+    oldBuild.items.forEach(item => item.classList.add('build-tearing-down'));
+    agentCanvas.classList.add('active');
+  }
+  transitionState = tx;
+  tx.rafId = requestAnimationFrame(transitionFrame);
+}
+
+function nextSlide() { goToSlide(current + 1); }
+function prevSlide() { goToSlide(current - 1); }
+
+function updateUI() {
+  const progress = (current + 1) / TOTAL_SLIDES * 100;
+  progressFill.style.width = progress + '%';
+  progressTrack.setAttribute('aria-valuenow', progress.toFixed(2));
+}
+
+/* ═══════════════════════════════════════════
+   TECLADO
+   ═══════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if (transitionState) {
+    e.preventDefault();
+    finishTransition();
+    return;
+  }
+  if (e.target instanceof Element && e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+  switch (e.key) {
+    case 'ArrowRight': case ' ':
+      e.preventDefault(); nextSlide(); break;
+    case 'ArrowLeft':
+      e.preventDefault(); prevSlide(); break;
+    case 'f': case 'F':
+      e.preventDefault();
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+      else document.exitFullscreen();
+      break;
+  }
+});
+
+/* ═══════════════════════════════════════════
+   NAVEGAÇÃO PELO CLIQUE NAS LATERAIS
+   ═══════════════════════════════════════════ */
+document.addEventListener('click', e => {
+  if (transitionState) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    finishTransition();
+    return;
+  }
+  if (Date.now() < suppressClickUntil || !(e.target instanceof Element)) return;
+  if (e.target.closest('button, a, input, textarea, select, [role="button"], [contenteditable="true"], .article-node')) return;
+  if (e.clientX < window.innerWidth / 2) prevSlide();
+  else nextSlide();
+}, true);
+
+/* ═══════════════════════════════════════════
+   SWIPE (TOQUE)
+   ═══════════════════════════════════════════ */
+let touchStartX = 0, touchStartY = 0;
+document.addEventListener('touchstart', e => {
+  touchStartX = e.changedTouches[0].screenX;
+  touchStartY = e.changedTouches[0].screenY;
+}, { passive: true });
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].screenX - touchStartX;
+  const dy = e.changedTouches[0].screenY - touchStartY;
+  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+    suppressClickUntil = Date.now() + 500;
+    if (dx < 0) nextSlide(); else prevSlide();
+  }
+}, { passive: true });
+
+/* ═══════════════════════════════════════════
+   SLIDE 3 — TIMELINE ANIMATION
+   ═══════════════════════════════════════════ */
+function animateTimeline() {
+  const fill = document.getElementById('timelineFill');
+  const bar = document.getElementById('progressBarFill');
+  const num = document.getElementById('progressNum');
+  if (fill) fill.style.width = '50%';
+  if (bar) bar.style.width = '50%';
+  /* animate counter */
+  if (num) {
+    let c = 0;
+    const iv = setInterval(() => {
+      c += 2;
+      if (c > 50) { c = 50; clearInterval(iv); }
+      num.textContent = c;
+    }, 30);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   SLIDE 4 — EMBEDDING SPACE
+   ═══════════════════════════════════════════ */
+const embedCanvas = document.getElementById('embedCanvas');
+const embedCtx = embedCanvas ? embedCanvas.getContext('2d') : null;
+let embedAnimated = false;
+
+const wordGroups = {
+  animais: { words: ['gato', 'cachorro', 'leão'], color: '#86c3bc' },
+  veiculos: { words: ['carro', 'moto', 'ônibus'], color: '#d7ad72' },
+  comida: { words: ['arroz', 'feijão', 'pão'], color: '#d88470' },
+  lugares: { words: ['casa', 'escola', 'praça'], color: '#d5c695' }
+};
+
+let embedPoints = [];
+function initEmbedPoints(grouped) {
+  embedPoints = [];
+  const cw = embedCanvas.width, ch = embedCanvas.height;
+  const groups = Object.values(wordGroups);
+  groups.forEach((g, gi) => {
+    g.words.forEach((w, wi) => {
+      const scattered = { x: Math.random() * (cw - 40) + 20, y: Math.random() * (ch - 40) + 20 };
+      const cx = grouped ? (gi % 2 === 0 ? cw * 0.28 : cw * 0.72) : scattered.x;
+      const cy = grouped ? (gi < 2 ? ch * 0.3 : ch * 0.72) : scattered.y;
+      const tx = cx + (wi - 1) * 28;
+      const ty = cy + (wi - 1) * 14;
+      embedPoints.push({
+        word: w, color: g.color,
+        x: scattered.x, y: scattered.y,
+        tx: grouped ? tx : scattered.x,
+        ty: grouped ? ty : scattered.y,
+      });
+    });
+  });
+}
+
+function drawEmbed() {
+  if (!embedCtx) return;
+  const cw = embedCanvas.width, ch = embedCanvas.height;
+  embedCtx.clearRect(0, 0, cw, ch);
+  embedPoints.forEach(p => {
+    p.x += (p.tx - p.x) * 0.08;
+    p.y += (p.ty - p.y) * 0.08;
+    embedCtx.beginPath();
+    embedCtx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+    embedCtx.fillStyle = p.color;
+    embedCtx.fill();
+    embedCtx.font = '11px "JetBrains Mono", monospace';
+    embedCtx.fillStyle = p.color;
+    embedCtx.fillText(p.word, p.x + 8, p.y + 4);
+  });
+  requestAnimationFrame(drawEmbed);
+}
+
+function setupEmbedCanvas() {
+  if (!embedCanvas) return;
+  const rect = embedCanvas.parentElement.getBoundingClientRect();
+  embedCanvas.width = rect.width;
+  embedCanvas.height = rect.height;
+  initEmbedPoints(false);
+  drawEmbed();
+}
+
+const embedToggle = document.getElementById('embedToggle');
+if (embedToggle) {
+  embedToggle.addEventListener('click', () => {
+    embedAnimated = !embedAnimated;
+    initEmbedPoints(embedAnimated);
+    embedToggle.textContent = embedAnimated ? '↺ Espalhar' : '▶ Agrupar';
+  });
+}
+
+/* ═══════════════════════════════════════════
+   SLIDE 5 — ANALOGIAS WORD2VEC
+   ═══════════════════════════════════════════ */
+document.querySelectorAll('.analogy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.analogy-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const a = btn.dataset.a, c = btn.dataset.c, r = btn.dataset.r;
+    const resEl = document.getElementById('analogyResult');
+    if (btn.textContent.includes('−')) {
+      const b = btn.dataset.b;
+      resEl.innerHTML =
+        '<span class="word-token w-pos">' + a + '</span>' +
+        '<span class="op">−</span>' +
+        '<span class="word-token w-neg">' + b + '</span>' +
+        '<span class="op">+</span>' +
+        '<span class="word-token w-pos">' + c + '</span>' +
+        '<span class="op">≈</span>' +
+        '<span class="word-token w-res">' + r + '</span>';
+    } else {
+      resEl.innerHTML =
+        '<span class="word-token w-pos">' + a + '</span>' +
+        '<span class="op">+</span>' +
+        '<span class="word-token w-pos">' + c + '</span>' +
+        '<span class="op">≈</span>' +
+        '<span class="word-token w-res">' + r + '</span>';
+    }
+  });
+});
+
+/* ═══════════════════════════════════════════
+   SLIDE 6 — ELMO DEMO
+   ═══════════════════════════════════════════ */
+const elmoLabels = [
+  'manga → vetor posição A (fruta)',
+  'manga → vetor posição B (roupa)'
+];
+document.querySelectorAll('.elmo-sentence-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.elmo-sentence-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const idx = parseInt(btn.dataset.idx);
+    document.getElementById('elmoWordLabel').textContent = elmoLabels[idx];
+    /* animate layers */
+    document.querySelectorAll('.layer-bar').forEach((l, i) => {
+      l.style.opacity = '0';
+      l.style.transform = 'translateX(-20px)';
+      setTimeout(() => {
+        l.style.opacity = '1';
+        l.style.transform = 'translateX(0)';
+      }, 100 + i * 120);
+    });
+  });
+});
+
+/* ═══════════════════════════════════════════
+   SLIDE 7 — TOKENIZER
+   ═══════════════════════════════════════════ */
+const TOKEN_COLORS = [
+  { bg: 'rgba(134,195,188,0.12)', border: 'rgba(134,195,188,0.35)', color: '#86c3bc' },
+  { bg: 'rgba(215,173,114,0.12)', border: 'rgba(215,173,114,0.35)', color: '#d7ad72' },
+  { bg: 'rgba(216,132,112,0.12)', border: 'rgba(216,132,112,0.35)', color: '#d88470' },
+  { bg: 'rgba(213,198,149,0.12)', border: 'rgba(213,198,149,0.35)', color: '#d5c695' },
+  { bg: 'rgba(147,182,156,0.12)', border: 'rgba(147,182,156,0.35)', color: '#93b69c' },
+  { bg: 'rgba(194,141,103,0.12)', border: 'rgba(194,141,103,0.35)', color: '#c28d67' },
+];
+
+function simpleTokenize(text) {
+  if (!text) return [];
+  /* Simulate BPE-like tokenization */
+  const suffixes = ['mente', 'ção', 'ções', 'ismo', 'ista', 'ável', 'ível', 'ando', 'endo', 'indo', 'ado', 'ido', 'ante', 'ente', 'oso', 'osa', 'dade', 'tura', 'mento', 'ário', 'ério', 'ório', 'izar', 'ificar', 'issima', 'íssima', 'issimo', 'íssimo'];
+  const prefixes = ['des', 'in', 'im', 'ir', 're', 'pre', 'anti', 'sub', 'super', 'inter', 'trans', 'sobre', 'con'];
+
+  const tokens = [];
+  const words = text.split(/(\s+)/);
+  words.forEach((word, wIdx) => {
+    if (/^\s+$/.test(word)) return;
+    const prefix = wIdx === 0 ? '' : '▁';
+    let w = word.toLowerCase();
+    const parts = [];
+    
+    /* try to split into prefix + root + suffix */
+    let foundPrefix = '';
+    for (const p of prefixes) {
+      if (w.startsWith(p) && w.length > p.length + 2) {
+        foundPrefix = p;
+        w = w.substring(p.length);
+        break;
+      }
+    }
+
+    let foundSuffix = '';
+    for (const s of suffixes) {
+      if (w.endsWith(s) && w.length > s.length + 1) {
+        foundSuffix = s;
+        w = w.substring(0, w.length - s.length);
+        break;
+      }
+    }
+
+    if (foundPrefix) parts.push(prefix + foundPrefix);
+    if (w.length > 6 && !foundPrefix && !foundSuffix) {
+      /* split long words */
+      const mid = Math.ceil(w.length / 2);
+      parts.push((foundPrefix ? '' : prefix) + w.substring(0, mid));
+      parts.push(w.substring(mid));
+    } else {
+      parts.push((foundPrefix ? '' : prefix) + w);
+    }
+    if (foundSuffix) parts.push(foundSuffix);
+
+    parts.forEach(p => { if (p && p !== '▁') tokens.push(p); });
+  });
+  return tokens;
+}
+
+let currentTokens = [];
+const tokInput = document.getElementById('tokenizerInput');
+const tokOutput = document.getElementById('tokenizerOutput');
+const tokTokenize = document.getElementById('tokTokenize');
+const tokRevert = document.getElementById('tokRevert');
+
+function renderTokens(tokens) {
+  tokOutput.innerHTML = '';
+  tokens.forEach((t, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'token-chip';
+    const c = TOKEN_COLORS[i % TOKEN_COLORS.length];
+    chip.style.background = c.bg;
+    chip.style.borderColor = c.border;
+    chip.style.color = c.color;
+    chip.textContent = t;
+    chip.style.animationDelay = (i * 0.06) + 's';
+    tokOutput.appendChild(chip);
+  });
+}
+
+if (tokTokenize) {
+  tokTokenize.addEventListener('click', () => {
+    currentTokens = simpleTokenize(tokInput.value);
+    renderTokens(currentTokens);
+  });
+}
+if (tokInput) {
+  tokInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      currentTokens = simpleTokenize(tokInput.value);
+      renderTokens(currentTokens);
+    }
+  });
+}
+if (tokRevert) {
+  tokRevert.addEventListener('click', () => {
+    if (currentTokens.length) {
+      tokOutput.innerHTML = '<span class="token-chip" style="background:rgba(34,211,238,0.08);border-color:rgba(34,211,238,0.3);color:var(--cyan);animation:none;">' + currentTokens.join('').replace(/▁/g, ' ').trim() + '</span>';
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════
+   SLIDE 8 — ATTENTION HEATMAP
+   ═══════════════════════════════════════════ */
+const attnWords = ['O', 'gato', 'que', 'o', 'cachorro', 'perseguiu', 'fugiu'];
+/* Simulated attention matrix (row = query, col = key) */
+const attnMatrix = [
+  [0.1, 0.3, 0.1, 0.1, 0.1, 0.2, 0.1],
+  [0.05, 0.4, 0.1, 0.05, 0.1, 0.1, 0.2],
+  [0.15, 0.3, 0.15, 0.05, 0.15, 0.1, 0.1],
+  [0.1, 0.1, 0.1, 0.1, 0.4, 0.1, 0.1],
+  [0.05, 0.2, 0.05, 0.3, 0.2, 0.15, 0.05],
+  [0.05, 0.15, 0.1, 0.1, 0.35, 0.15, 0.1],
+  [0.1, 0.3, 0.05, 0.05, 0.15, 0.2, 0.15],
+];
+
+function buildAttnHeatmap() {
+  const sentenceEl = document.getElementById('attnSentence');
+  const gridEl = document.getElementById('attnGrid');
+  if (!sentenceEl || !gridEl) return;
+  sentenceEl.innerHTML = '';
+  gridEl.innerHTML = '';
+  const n = attnWords.length;
+  gridEl.style.gridTemplateColumns = 'repeat(' + n + ', 1fr)';
+
+  attnWords.forEach((w, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'attn-word';
+    btn.textContent = w;
+    btn.addEventListener('mouseenter', () => highlightAttn(i));
+    btn.addEventListener('mouseleave', () => clearAttn());
+    btn.addEventListener('click', () => highlightAttn(i));
+    sentenceEl.appendChild(btn);
+  });
+
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'attn-cell';
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      const val = attnMatrix[r][c];
+      cell.style.background = 'rgba(215,173,114,' + (val * 1.8) + ')';
+      gridEl.appendChild(cell);
+    }
+  }
+}
+
+function highlightAttn(rowIdx) {
+  const cells = document.querySelectorAll('.attn-cell');
+  const words = document.querySelectorAll('.attn-word');
+  const n = attnWords.length;
+  cells.forEach(c => {
+    const r = parseInt(c.dataset.row);
+    const col = parseInt(c.dataset.col);
+    if (r === rowIdx) {
+      c.style.background = 'rgba(215,173,114,' + (attnMatrix[r][col] * 2.5) + ')';
+      c.style.boxShadow = '0 0 4px rgba(215,173,114,0.18)';
+    } else {
+      c.style.background = 'rgba(215,173,114,' + (attnMatrix[r][col] * 0.5) + ')';
+      c.style.boxShadow = 'none';
+    }
+  });
+  words.forEach((w, i) => {
+    w.classList.toggle('active', i === rowIdx);
+  });
+}
+
+function clearAttn() {
+  const cells = document.querySelectorAll('.attn-cell');
+  const n = attnWords.length;
+  cells.forEach(c => {
+    const r = parseInt(c.dataset.row);
+    const col = parseInt(c.dataset.col);
+    c.style.background = 'rgba(215,173,114,' + (attnMatrix[r][col] * 1.8) + ')';
+    c.style.boxShadow = 'none';
+  });
+  document.querySelectorAll('.attn-word').forEach(w => w.classList.remove('active'));
+}
+
+/* RNN vs Transformer wave animations */
+function drawWaves() {
+  const rnnC = document.getElementById('rnnWaveCanvas');
+  const tfC = document.getElementById('tfWaveCanvas');
+  if (!rnnC || !tfC) return;
+  const rCtx = rnnC.getContext('2d');
+  const tCtx = tfC.getContext('2d');
+  let frame = 0;
+
+  function draw() {
+    frame++;
+    [rCtx, tCtx].forEach(c => c.clearRect(0, 0, 200, 50));
+
+    /* RNN: sequential dots */
+    const rnnProgress = (frame % 120) / 120;
+    for (let i = 0; i < 6; i++) {
+      const x = 20 + i * 30;
+      const active = i <= rnnProgress * 5;
+      rCtx.beginPath();
+      rCtx.arc(x, 25, 6, 0, Math.PI * 2);
+      rCtx.fillStyle = active ? 'rgba(216,132,112,0.8)' : 'rgba(255,255,255,0.1)';
+      rCtx.fill();
+      if (i < 5) {
+        rCtx.beginPath();
+        rCtx.moveTo(x + 6, 25);
+        rCtx.lineTo(x + 24, 25);
+        rCtx.strokeStyle = active && i < rnnProgress * 5 ? 'rgba(236,72,153,0.5)' : 'rgba(255,255,255,0.06)';
+        rCtx.lineWidth = 2;
+        rCtx.stroke();
+      }
+    }
+
+    /* Transformer: all lit at once */
+    const tfPulse = Math.sin(frame * 0.05) * 0.3 + 0.7;
+    for (let i = 0; i < 6; i++) {
+      const x = 20 + i * 30;
+      tCtx.beginPath();
+      tCtx.arc(x, 25, 6, 0, Math.PI * 2);
+      tCtx.fillStyle = 'rgba(215,173,114,' + tfPulse + ')';
+      tCtx.fill();
+      /* Connect all to all */
+      for (let j = i + 1; j < 6; j++) {
+        const x2 = 20 + j * 30;
+        tCtx.beginPath();
+        tCtx.moveTo(x, 25);
+        tCtx.lineTo(x2, 25 - 5);
+        tCtx.strokeStyle = 'rgba(215,173,114,' + (tfPulse * 0.2) + ')';
+        tCtx.lineWidth = 0.5;
+        tCtx.stroke();
+      }
+    }
+
+    requestAnimationFrame(draw);
+  }
+  if (!reducedMotion) draw();
+}
+
+/* ═══════════════════════════════════════════
+   SLIDE 12 — EVOLUTION TIMELINE
+   ═══════════════════════════════════════════ */
+function buildEvoTimeline() {
+  const container = document.getElementById('evoTimeline');
+  if (!container) return;
+  const nodes = ['N-gram', 'Bengio', 'Word2Vec', 'ELMo', 'Transformer', 'GPT/BERT', 'T5'];
+  container.innerHTML = '';
+  nodes.forEach((n, i) => {
+    if (i > 0) {
+      const arrow = document.createElement('div');
+      arrow.className = 'evo-arrow';
+      container.appendChild(arrow);
+    }
+    const node = document.createElement('div');
+    node.className = 'evo-node';
+    node.innerHTML = '<div class="evo-dot filled"></div><span>' + n + '</span>';
+    container.appendChild(node);
+  });
+  /* future */
+  const arrow = document.createElement('div');
+  arrow.className = 'evo-arrow';
+  arrow.style.background = 'rgba(255,255,255,0.08)';
+  container.appendChild(arrow);
+  const future = document.createElement('div');
+  future.className = 'evo-node';
+  future.innerHTML = '<div class="evo-dot"></div><span style="opacity:0.5;">Fases 3–4</span>';
+  container.appendChild(future);
+}
+
+/* ═══════════════════════════════════════════
+   TRIGGER INTERACTIONS PER SLIDE
+   ═══════════════════════════════════════════ */
+const slideInitialized = new Set();
+
+function triggerSlideInteractions(idx) {
+  if (slideInitialized.has(idx)) return;
+  slideInitialized.add(idx);
+  switch (idx) {
+    case 2: /* timeline */
+      setTimeout(animateTimeline, 400);
+      break;
+    case 3: /* bengio embed space */
+      setTimeout(setupEmbedCanvas, 300);
+      break;
+    case 6: /* sentencepiece tokenizer */
+      setTimeout(() => {
+        if (tokInput && tokInput.value) {
+          currentTokens = simpleTokenize(tokInput.value);
+          renderTokens(currentTokens);
+        }
+      }, 500);
+      break;
+    case 7: /* transformer attention heatmap */
+      buildAttnHeatmap();
+      drawWaves();
+      break;
+    case 11: /* synthesis timeline */
+      buildEvoTimeline();
+      break;
+  }
+}
+
+/* Initial slide setup */
+slides.forEach((slide, index) => {
+  setSlideInert(slide, index !== current);
+  configureBuildItems(slide);
+});
+triggerSlideInteractions(0);
+
+/* Handle window resize for embed canvas */
+window.addEventListener('resize', () => {
+  resizeAgentCanvas();
+  if (transitionState) finishTransition();
+  if (slideInitialized.has(3)) {
+    setupEmbedCanvas();
+  }
+});
+
+})();
+</script>
+</body>
+</html>
