@@ -109,17 +109,16 @@ body::before {
   visibility: hidden;
   transform: none;
   filter: none;
-  transition: opacity 0.12s ease, visibility 0s 0.12s;
+  transition: none;
 }
 .slide.active {
   opacity: 1; visibility: visible;
-  transition-delay: 0s;
 }
 .slide.tearing-down { transition: none; }
 .slide.building { opacity: 1; visibility: visible; transition: none; }
 .slide.building, .slide.building * { pointer-events: none !important; }
 .slide.tearing-down, .slide.tearing-down * { pointer-events: none !important; }
-.slide.reduced-transition { transition: opacity 0.12s ease, visibility 0s 0.12s; }
+.slide.reduced-transition { transition: none; }
 
 /* ═══════════════════════════════════════════
    COMMON COMPONENTS
@@ -1028,7 +1027,7 @@ p, li { font-size: clamp(0.85rem, 1.1vw, 1rem); line-height: 1.65; color: var(--
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  .slide.reduced-transition { transition: opacity 0.12s ease, visibility 0s 0.12s !important; }
+  .slide.reduced-transition { transition: none !important; }
   .slide { filter: none !important; transform: none !important; }
   .slide.active { opacity: 1; }
 }
@@ -2780,43 +2779,18 @@ function transitionFrame(now) {
    IR PARA SLIDE
    ═══════════════════════════════════════════ */
 function goToSlide(idx) {
-  if (transitionState) {
-    finishTransition();
-    return;
-  }
   if (idx === current || idx < 0 || idx >= TOTAL_SLIDES) return;
 
   const oldSlide = slides[current];
-  clearSlideTransitionClasses(oldSlide);
-  const oldBuild = configureBuildItems(oldSlide);
-  const tx = {
-    oldIndex: current,
-    targetIndex: idx,
-    oldSlide,
-    targetSlide: slides[idx],
-    items: [],
-    agents: [],
-    fragments: reducedMotion ? [] : makeTeardownFragments(oldBuild.items),
-    phase: 'teardown',
-    startTime: performance.now(),
-    teardownDuration: reducedMotion ? 120 : TEARDOWN_DURATION,
-    rafId: 0,
-    activated: false
-  };
-
-  if (reducedMotion) {
-    setSlideInert(oldSlide, true);
-    oldSlide.classList.add('reduced-transition');
-    void oldSlide.offsetWidth;
-    oldSlide.classList.remove('active');
-  } else {
-    setSlideInert(oldSlide, true);
-    oldSlide.classList.add('tearing-down');
-    oldBuild.items.forEach(item => item.classList.add('build-tearing-down'));
-    agentCanvas.classList.add('active');
-  }
-  transitionState = tx;
-  tx.rafId = requestAnimationFrame(transitionFrame);
+  const targetSlide = slides[idx];
+  oldSlide.classList.remove('active');
+  setSlideInert(oldSlide, true);
+  targetSlide.classList.remove('tearing-down', 'building', 'reduced-transition');
+  targetSlide.classList.add('active');
+  setSlideInert(targetSlide, false);
+  current = idx;
+  updateUI();
+  triggerSlideInteractions(current);
 }
 
 function nextSlide() { goToSlide(current + 1); }
@@ -3338,7 +3312,6 @@ function triggerSlideInteractions(idx) {
 /* Initial slide setup */
 slides.forEach((slide, index) => {
   setSlideInert(slide, index !== current);
-  configureBuildItems(slide);
 });
 triggerSlideInteractions(0);
 
