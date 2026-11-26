@@ -88,76 +88,6 @@ body::before {
   box-shadow: 0 0 7px var(--cyan-glow);
 }
 
-.slide-counter {
-  position: fixed; top: 14px; right: var(--slide-pad);
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  color: var(--text-dim);
-  z-index: 1000;
-  letter-spacing: 0.05em;
-}
-.slide-counter .current { color: var(--cyan); font-weight: 700; }
-
-/* ═══════════════════════════════════════════
-   NAV ARROWS
-   ═══════════════════════════════════════════ */
-.nav-arrow {
-  position: fixed;
-  top: 50%; transform: translateY(-50%);
-  z-index: 1000;
-  width: 48px; height: 48px;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 50%;
-  background: rgba(15,18,35,0.5);
-  backdrop-filter: blur(8px);
-  color: var(--text-dim);
-  font-size: 1.3rem;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: var(--transition);
-}
-.nav-arrow:hover, .nav-arrow:focus-visible {
-  border-color: var(--cyan);
-  color: var(--cyan);
-  box-shadow: 0 0 20px var(--cyan-glow);
-}
-.nav-arrow:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
-.nav-arrow.prev { left: 16px; }
-.nav-arrow.next { right: 16px; }
-.nav-arrow.hidden { opacity: 0; pointer-events: none; }
-
-/* ═══════════════════════════════════════════
-   DOT NAV
-   ═══════════════════════════════════════════ */
-.dot-nav {
-  position: fixed; bottom: 24px; left: 50%;
-  transform: translateX(-50%);
-  display: flex; gap: 10px;
-  z-index: 1000;
-  padding: 8px 16px;
-  background: rgba(15,18,35,0.6);
-  backdrop-filter: blur(10px);
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.06);
-}
-.dot-nav button {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255,255,255,0.2);
-  background: transparent;
-  cursor: pointer;
-  transition: var(--transition);
-  padding: 0;
-}
-.dot-nav button:hover { border-color: var(--cyan); }
-.dot-nav button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
-.dot-nav button.active {
-  background: var(--cyan);
-  border-color: var(--cyan);
-  box-shadow: 0 0 10px var(--cyan-glow);
-  transform: scale(1.3);
-}
-
 /* ═══════════════════════════════════════════
    SLIDE CONTAINER & TRANSITIONS
    ═══════════════════════════════════════════ */
@@ -190,53 +120,6 @@ body::before {
 .slide.building, .slide.building * { pointer-events: none !important; }
 .slide.tearing-down, .slide.tearing-down * { pointer-events: none !important; }
 .slide.reduced-transition { transition: opacity 0.12s ease, visibility 0s 0.12s; }
-
-/* ═══════════════════════════════════════════
-   OVERVIEW MODE
-   ═══════════════════════════════════════════ */
-.overview-backdrop {
-  position: fixed; inset: 0;
-  z-index: 5000;
-  background: rgba(5,6,15,0.92);
-  backdrop-filter: blur(16px);
-  display: none;
-  place-items: center;
-  padding: 2rem;
-  overflow-y: auto;
-}
-.overview-backdrop.open { display: grid; }
-
-.overview-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 16px;
-  max-width: 1100px;
-  width: 100%;
-}
-.overview-thumb {
-  aspect-ratio: 16/9;
-  border-radius: var(--radius-sm);
-  border: 2px solid rgba(255,255,255,0.08);
-  background: var(--bg-card);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  color: var(--text-dim);
-  cursor: pointer;
-  transition: var(--transition);
-  flex-direction: column;
-  gap: 4px;
-  padding: 8px;
-  text-align: center;
-}
-.overview-thumb:hover, .overview-thumb:focus-visible {
-  border-color: var(--cyan);
-  box-shadow: 0 0 24px var(--cyan-glow);
-  transform: scale(1.05);
-}
-.overview-thumb.active-thumb { border-color: var(--cyan); background: rgba(34,211,238,0.08); }
-.overview-thumb .thumb-num { font-size: 1.2rem; font-weight: 700; color: var(--cyan); }
-.overview-thumb .thumb-label { font-family: var(--font-body); font-size: 0.65rem; line-height: 1.3; }
 
 /* ═══════════════════════════════════════════
    COMMON COMPONENTS
@@ -351,6 +234,112 @@ p, li { font-size: clamp(0.85rem, 1.1vw, 1rem); line-height: 1.65; color: var(--
   margin-bottom: 16px;
 }
 
+#llmIntro .slide-inner {
+  max-width: 980px;
+  width: 100%;
+  text-align: center;
+}
+
+.llm-intro-box {
+  max-width: 900px;
+  margin: 18px auto 0;
+  padding: clamp(24px, 3vw, 38px);
+  border: 1px solid rgba(50, 217, 242, 0.18);
+  border-left: 3px solid var(--cyan);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(50, 217, 242, 0.08), rgba(167, 139, 250, 0.05)),
+    var(--bg-card);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+  font-family: var(--font-title);
+  font-size: clamp(1.15rem, 2vw, 1.55rem);
+  line-height: 1.65;
+  color: var(--text-bright);
+  text-align: left;
+}
+
+.article-title-box {
+  width: 100%;
+  margin: 0 0 10px;
+  padding: 9px 14px;
+  border: 1px solid rgba(50, 217, 242, 0.22);
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(50, 217, 242, 0.09), rgba(167, 139, 250, 0.04));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: clamp(0.64rem, 0.75vw, 0.78rem);
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+}
+
+.article-title-box strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--cyan);
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.objective-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 16px;
+  margin-top: 18px;
+  text-align: left;
+}
+
+.objective-card {
+  min-height: 150px;
+  padding: clamp(16px, 2vw, 24px);
+  border: 1px solid rgba(50, 217, 242, 0.13);
+  border-top: 2px solid var(--cyan);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(145deg, rgba(50, 217, 242, 0.07), rgba(21,28,50,0.82));
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.12);
+}
+
+.objective-card:nth-child(2) {
+  border-top-color: var(--violet);
+  background: linear-gradient(145deg, rgba(167, 139, 250, 0.07), rgba(21,28,50,0.82));
+}
+
+.objective-card h3 {
+  margin-bottom: 10px;
+  font-family: var(--font-title);
+  color: var(--text-bright);
+  font-size: clamp(1.05rem, 1.35vw, 1.25rem);
+}
+
+.objective-card p,
+.objective-card li {
+  color: var(--text-dim);
+  font-size: clamp(0.82rem, 1vw, 0.96rem);
+  line-height: 1.55;
+}
+
+.objective-card ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+#methodology .slide-inner {
+  max-width: 1050px;
+  width: 100%;
+  text-align: center;
+}
+
+#methodology .method-card {
+  border-top: 2px solid var(--cyan);
+  background: linear-gradient(145deg, rgba(50,217,242,0.07), rgba(21,28,50,0.85));
+}
+
+#methodology .method-card:nth-child(2) { border-top-color: var(--violet); }
+#methodology .method-card:nth-child(3) { border-top-color: var(--magenta); }
+#methodology .method-card:nth-child(4) { border-top-color: var(--amber); }
+
 .method-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -362,29 +351,12 @@ p, li { font-size: clamp(0.85rem, 1.1vw, 1rem); line-height: 1.65; color: var(--
   padding: clamp(12px, 1.5vw, 20px);
   position: relative;
 }
-.method-card .card-icon {
-  font-size: 1.8rem;
-  margin-bottom: 8px;
-  display: block;
-}
 .method-card h3 { font-size: clamp(0.8rem, 1vw, 0.95rem); margin-bottom: 4px; }
 .method-card p { font-size: 0.75rem; }
 .method-card .card-num {
   position: absolute; top: 8px; left: 12px;
   font-family: var(--font-mono); font-size: 0.65rem;
   color: var(--cyan); opacity: 0.5;
-}
-.method-arrow {
-  display: flex; align-items: center;
-  color: var(--cyan); font-size: 1.2rem;
-  opacity: 0.4;
-}
-.meta-goal {
-  margin-top: 16px;
-  font-family: var(--font-mono);
-  font-size: clamp(0.75rem, 0.9vw, 0.88rem);
-  color: var(--magenta);
-  letter-spacing: 0.05em;
 }
 
 /* ═══════════════════════════════════════════
@@ -1031,10 +1003,6 @@ p, li { font-size: clamp(0.85rem, 1.1vw, 1rem); line-height: 1.65; color: var(--
    ═══════════════════════════════════════════ */
 @media (max-width: 768px) {
   .slide { padding: 1rem; padding-top: 2rem; padding-bottom: 3.5rem; }
-  .nav-arrow { width: 36px; height: 36px; font-size: 1rem; }
-  .nav-arrow.prev { left: 6px; }
-  .nav-arrow.next { right: 6px; }
-
   #slide4 .slide-inner,
   #slide5 .slide-inner,
   #slide6 .slide-inner,
@@ -1047,7 +1015,6 @@ p, li { font-size: clamp(0.85rem, 1.1vw, 1rem); line-height: 1.65; color: var(--
   .timeline-track { display: none; }
   .split-view { grid-template-columns: 1fr; }
   .split-half.gpt-side { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); }
-  .overview-grid { grid-template-columns: repeat(2, 1fr); }
   .next-steps-grid { grid-template-columns: 1fr; }
   .wave-compare { flex-direction: column; }
 }
@@ -1123,9 +1090,6 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
   border-radius: 0;
   letter-spacing: 0.08em;
 }
-.nav-arrow { width: 56px; height: 56px; font-size: 1.55rem; }
-.dot-nav { gap: 12px; padding: 10px 18px; }
-.dot-nav button { width: 12px; height: 12px; }
 
 #slide1 { gap: 20px; }
 #slide1 .cover-content {
@@ -1143,19 +1107,6 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
   line-height: 1.08;
 }
 #slide1 .cover-rule { margin: 18px 0 !important; }
-.method-card .card-icon { color: var(--cyan); }
-.method-card:nth-child(2) .card-icon { color: var(--violet); }
-.method-card:nth-child(3) .card-icon { color: var(--magenta); }
-.method-card:nth-child(4) .card-icon { color: var(--cyan); }
-.method-card .card-icon svg {
-  width: 48px;
-  height: 48px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
 .cover-subtitle {
   font-size: clamp(0.9rem, 1.25vw, 1.05rem);
   margin-bottom: 16px;
@@ -1257,13 +1208,8 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
   flex-direction: column;
   justify-content: center;
 }
-.method-card .card-icon { font-size: 2.7rem; margin-bottom: 12px; }
 .method-card h3 { font-size: clamp(1.05rem, 1.4vw, 1.3rem); margin-bottom: 8px; }
 .method-card p { font-size: clamp(0.95rem, 1.1vw, 1.05rem); }
-.meta-goal {
-  margin-top: 24px;
-  font-size: clamp(0.95rem, 1.2vw, 1.1rem);
-}
 
 #slide3 .slide-inner { max-width: 1220px; }
 #slide3 .slide-inner > p { font-size: 1rem !important; }
@@ -1698,6 +1644,12 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
   #slide9 .article-layout,
   #slide10 .article-layout,
   #slide11 .article-layout { grid-template-columns: 1fr; gap: 18px; }
+  .objective-grid { grid-template-columns: 1fr; gap: 10px; }
+  .objective-card { min-height: 0; }
+  .method-cards { grid-template-columns: 1fr; }
+  .article-title-box { font-size: 0.68rem; }
+  .objective-grid { grid-template-columns: 1fr; gap: 10px; }
+  .method-cards { grid-template-columns: 1fr; }
   .article-copy { gap: 12px; }
   .article-point { padding: 12px; }
   #slide12 .evolution-timeline { justify-content: flex-start; overflow-x: auto; }
@@ -1715,8 +1667,8 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
 <body>
 
 <!-- ═══ BARRA DE PROGRESSO ═══ -->
-<div class="progress-bar-track" id="progressTrack" role="progressbar" aria-label="Progresso da apresentação" aria-valuenow="8.33" aria-valuemin="0" aria-valuemax="100">
-  <div class="progress-bar-fill" id="progressFill" style="width: 8.33%"></div>
+<div class="progress-bar-track" id="progressTrack" role="progressbar" aria-label="Progresso da apresentação" aria-valuenow="7.14" aria-valuemin="0" aria-valuemax="100">
+  <div class="progress-bar-fill" id="progressFill" style="width: 7.14%"></div>
 </div>
 
 <canvas class="agent-canvas" id="agentCanvas" aria-hidden="true"></canvas>
@@ -1735,7 +1687,7 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
         <div class="cover-rule stagger"></div>
         <div class="cover-info stagger">
           <strong>Discente:</strong> Mateus Antunes Belo<br>
-          <strong>Orientadora:</strong> Profa. Adriana Postal<br>
+          <strong>Orientadora:</strong> Professora Doutora Adriana Postal<br>
           <strong>Grupo:</strong> Grupo de Pesquisa em Algoritmos
         </div>
         <div class="cover-info stagger" style="margin-top: 4px;">
@@ -1783,8 +1735,19 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
     </div>
   </section>
 
-  <!-- ═══ SLIDE 2 — A PESQUISA ═══ -->
-  <section class="slide" id="slide2" aria-label="Slide 2: A Pesquisa" data-phase="intro">
+  <!-- ═══ NOVO SLIDE 2 — INTRODUÇÃO A LLMs ═══ -->
+  <section class="slide" id="llmIntro" aria-label="Slide 2: Introdução aos modelos de linguagem" data-phase="intro">
+    <div class="slide-inner">
+      <span class="phase-badge phase1 stagger">Introdução · Como um LLM aprende</span>
+      <h2 class="stagger" style="margin-top: 12px;">O que é um modelo de linguagem?</h2>
+      <p class="llm-intro-box stagger">
+        Um modelo de linguagem é uma sequência de camadas de neurônios que fazem contas com números chamados pesos. O conjunto desses pesos são os parâmetros. Eles começam aleatórios, e o treino consiste em prever a próxima palavra, medir o erro e ajustar os pesos por backpropagation, milhões de vezes.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 3 — A PESQUISA ═══ -->
+  <section class="slide" id="slide2" aria-label="Slide 3: A Pesquisa" data-phase="intro">
     <div class="slide-inner">
       <h2 class="stagger" style="margin-bottom: 8px;">Pergunta de pesquisa</h2>
       <div class="question-box glass-card stagger">
@@ -1793,38 +1756,58 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
       <p class="stagger" style="max-width: 700px; margin: 0 auto; font-size: clamp(0.8rem, 0.95vw, 0.92rem);">
         <strong style="color:var(--text-bright);">Objetivo:</strong> mapear técnicas que orientem a construção de um LLM do zero.
       </p>
-      <div class="method-cards stagger">
-        <div class="glass-card method-card">
-          <span class="card-num">01</span>
-          <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><circle cx="21" cy="21" r="12"></circle><path d="m30 30 10 10"></path></svg></span>
-          <h3>Busca</h3>
-          <p>Seleção de artigos + snowballing</p>
-        </div>
-        <div class="glass-card method-card">
-          <span class="card-num">02</span>
-          <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M14 9h17l6 6v26H14z"></path><path d="M31 9v7h6"></path><path d="M20 24h11M20 30h11M20 36h7"></path></svg></span>
-          <h3>Fichamento</h3>
-          <p>Extrair objetivos, métodos e limites</p>
-        </div>
-        <div class="glass-card method-card">
-          <span class="card-num">03</span>
-          <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M10 13c6-3 12-2 14 2v25c-3-4-8-5-14-2z"></path><path d="M24 15c3-4 8-5 14-2v25c-6-3-11-2-14 2z"></path><path d="M16 21h4M29 21h4M16 27h4M29 27h4"></path></svg></span>
-          <h3>Referencial</h3>
-          <p>Organizar conceitos do geral ao específico</p>
-        </div>
-        <div class="glass-card method-card">
-          <span class="card-num">04</span>
-          <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><circle cx="24" cy="12" r="5"></circle><circle cx="12" cy="35" r="5"></circle><circle cx="36" cy="35" r="5"></circle><path d="M21 16 15 30M27 16l6 14M17 35h14"></path></svg></span>
-          <h3>Síntese</h3>
-          <p>Comparar escolhas e identificar lacunas</p>
-        </div>
+      <div class="objective-grid stagger">
+        <article class="objective-card">
+          <h3>Objetivo geral</h3>
+          <p>Investigar como grandes modelos de linguagem codificam, armazenam e recuperam conhecimento, identificando técnicas que orientem o desenvolvimento de um LLM do zero.</p>
+        </article>
+        <article class="objective-card">
+          <h3>Objetivos específicos</h3>
+          <ul>
+            <li>Reconstruir a evolução das representações linguísticas.</li>
+            <li>Comparar arquiteturas, tarefas de pré-treino e formas de representação.</li>
+            <li>Sintetizar escolhas técnicas e limitações do estado da arte.</li>
+          </ul>
+        </article>
       </div>
-      <div class="meta-goal stagger">META FINAL → Embasar a construção de um LLM do zero</div>
     </div>
   </section>
 
-  <!-- ═══ SLIDE 3 — ROTEIRO E PROGRESSO ═══ -->
-  <section class="slide" id="slide3" aria-label="Slide 3: Roteiro e Progresso" data-phase="timeline">
+  <!-- ═══ SLIDE 4 — COMO A PESQUISA SERÁ FEITA ═══ -->
+  <section class="slide" id="methodology" aria-label="Slide 4: Materiais e métodos" data-phase="intro">
+    <div class="slide-inner">
+      <span class="phase-badge phase1 stagger">Materiais e Métodos</span>
+      <h2 class="stagger" style="margin: 12px 0 8px;">Como a pesquisa será realizada</h2>
+      <p class="stagger" style="max-width: 760px; margin: 0 auto 4px; color: var(--text-dim);">
+        Revisão bibliográfica estruturada, com seleção, leitura crítica e síntese comparativa dos trabalhos.
+      </p>
+      <div class="method-cards stagger">
+        <div class="glass-card method-card">
+          <span class="card-num">01</span>
+          <h3>Busca</h3>
+          <p>Seleção de artigos científicos e uso de snowballing para ampliar a referência inicial.</p>
+        </div>
+        <div class="glass-card method-card">
+          <span class="card-num">02</span>
+          <h3>Seleção</h3>
+          <p>Critério por relevância para representações, pré-treino, arquiteturas e conhecimento.</p>
+        </div>
+        <div class="glass-card method-card">
+          <span class="card-num">03</span>
+          <h3>Fichamento</h3>
+          <p>Extração de objetivos, métodos, dados, resultados, limitações e contribuições.</p>
+        </div>
+        <div class="glass-card method-card">
+          <span class="card-num">04</span>
+          <h3>Síntese</h3>
+          <p>Organização cronológica e comparação das técnicas para identificar padrões e lacunas.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SLIDE 5 — ROTEIRO E PROGRESSO ═══ -->
+  <section class="slide" id="slide3" aria-label="Slide 5: Roteiro de literatura" data-phase="timeline">
     <div class="slide-inner">
       <h2 class="stagger" style="text-align:center; margin-bottom: 4px;">Roteiro de Leitura</h2>
       <p class="stagger" style="text-align:center; margin-bottom: 8px; font-size:0.85rem;">4 fases, 50% concluído</p>
@@ -1882,11 +1865,12 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
     </div>
   </section>
 
-  <!-- ═══ SLIDE 4 — BENGIO 2003 ═══ -->
-  <section class="slide" id="slide4" aria-label="Slide 4: Fase 1 — Bengio 2003" data-phase="phase1">
+  <!-- ═══ SLIDE 5 — BENGIO 2003 ═══ -->
+  <section class="slide" id="slide4" aria-label="Slide 6: Fase 1 — Bengio 2003" data-phase="phase1">
     <div class="slide-inner">
       <div class="content-col">
         <span class="phase-badge phase1 stagger">Fase 1 · Representações de palavras</span>
+        <div class="article-title-box stagger"><strong>Artigo completo</strong>A Neural Probabilistic Language Model</div>
         <h2 class="stagger">Bengio (2003): contexto em vetores</h2>
         <ul>
           <li class="stagger"><strong style="color:var(--text-bright);">Abismo semântico:</strong> linguagem ambígua, contexto imprevisível.</li>
@@ -1905,11 +1889,12 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
     </div>
   </section>
 
-  <!-- ═══ SLIDE 5 — WORD2VEC ═══ -->
-  <section class="slide" id="slide5" aria-label="Slide 5: Fase 1 — Word2Vec 2013" data-phase="phase1">
+  <!-- ═══ SLIDE 6 — WORD2VEC ═══ -->
+  <section class="slide" id="slide5" aria-label="Slide 7: Fase 1 — Word2Vec 2013" data-phase="phase1">
     <div class="slide-inner">
       <div class="content-col">
         <span class="phase-badge phase1 stagger">Fase 1 · Representações de palavras</span>
+        <div class="article-title-box stagger"><strong>Artigo completo</strong>Efficient Estimation of Word Representations in Vector Space</div>
         <h2 class="stagger">Word2Vec (Mikolov, 2013)</h2>
         <ul>
           <li class="stagger"><strong style="color:var(--text-bright);">Skip-gram:</strong> prevê vizinhas a partir da palavra central.</li>
@@ -1943,11 +1928,12 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
     </div>
   </section>
 
-  <!-- ═══ SLIDE 6 — ELMo ═══ -->
-  <section class="slide" id="slide6" aria-label="Slide 6: Fase 1 — ELMo 2018" data-phase="phase1">
+  <!-- ═══ SLIDE 7 — ELMo ═══ -->
+  <section class="slide" id="slide6" aria-label="Slide 8: Fase 1 — ELMo 2018" data-phase="phase1">
     <div class="slide-inner">
       <div class="content-col">
         <span class="phase-badge phase1 stagger">Fase 1 · Representações de palavras</span>
+        <div class="article-title-box stagger"><strong>Artigo completo</strong>Deep Contextualized Word Representations</div>
         <h2 class="stagger">ELMo (Peters et al., 2018)</h2>
         <ul>
           <li class="stagger">Fim das coordenadas fixas: o vetor <span class="accent-cyan">muda conforme o contexto</span>.</li>
@@ -1980,11 +1966,12 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
     </div>
   </section>
 
-  <!-- ═══ SLIDE 7 — SENTENCEPIECE ═══ -->
-  <section class="slide" id="slide7" aria-label="Slide 7: Fase 1 — SentencePiece 2018" data-phase="phase1">
+  <!-- ═══ SLIDE 8 — SENTENCEPIECE ═══ -->
+  <section class="slide" id="slide7" aria-label="Slide 9: Fase 1 — SentencePiece 2018" data-phase="phase1">
     <div class="slide-inner">
       <div class="content-col">
         <span class="phase-badge phase1 stagger">Fase 1 · Representações de palavras</span>
+        <div class="article-title-box stagger"><strong>Artigo completo</strong>SentencePiece: A Simple and Language Independent Subword Tokenizer and Detokenizer for Neural Text Processing</div>
         <h2 class="stagger">SentencePiece (Kudo, 2018)</h2>
         <ul>
           <li class="stagger"><strong style="color:var(--text-bright);">Problema:</strong> o espaço marca fim de palavra, mas nem todo idioma tem espaço.</li>
@@ -2006,11 +1993,12 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
     </div>
   </section>
 
-  <!-- ═══ SLIDE 8 — TRANSFORMER ═══ -->
-  <section class="slide" id="slide8" aria-label="Slide 8: Fase 2 — Transformer 2017" data-phase="phase2">
+  <!-- ═══ SLIDE 9 — TRANSFORMER ═══ -->
+  <section class="slide" id="slide8" aria-label="Slide 10: Fase 2 — Transformer 2017" data-phase="phase2">
     <div class="slide-inner">
       <div class="content-col">
         <span class="phase-badge phase2 stagger">Fase 2 · Revolução do Transformer</span>
+        <div class="article-title-box stagger"><strong>Artigo completo</strong>Attention Is All You Need</div>
         <h2 class="stagger">Transformer (Vaswani, 2017)</h2>
         <ul>
           <li class="stagger"><strong style="color:var(--text-bright);">Antes:</strong> RNNs liam palavra por palavra — gargalo sequencial + amnésia.</li>
@@ -2040,11 +2028,12 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
     </div>
   </section>
 
-  <!-- ═══ SLIDE 9 — GPT-1 ═══ -->
-  <section class="slide" id="slide9" aria-label="Slide 9: GPT-1 e pré-treinamento generativo" data-phase="phase2">
+  <!-- ═══ SLIDE 10 — GPT-1 ═══ -->
+  <section class="slide" id="slide9" aria-label="Slide 11: GPT-1 e pré-treinamento generativo" data-phase="phase2">
     <div class="slide-inner article-layout">
       <div class="article-copy">
         <span class="phase-badge phase2 stagger">Fase 2 · Aprender a gerar</span>
+        <div class="article-title-box stagger"><strong>Artigo completo</strong>Improving Language Understanding by Generative Pre-Training</div>
         <h2 class="stagger">GPT-1: prever o próximo token</h2>
         <p class="article-lead stagger">Como aproveitar grandes volumes de texto sem depender de rótulos feitos por pessoas?</p>
         <div class="article-points stagger">
@@ -2090,11 +2079,12 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
     </div>
   </section>
 
-  <!-- ═══ SLIDE 10 — BERT ═══ -->
-  <section class="slide" id="slide10" aria-label="Slide 10: BERT e leitura bidirecional" data-phase="phase2">
+  <!-- ═══ SLIDE 11 — BERT ═══ -->
+  <section class="slide" id="slide10" aria-label="Slide 12: BERT e leitura bidirecional" data-phase="phase2">
     <div class="slide-inner article-layout">
       <div class="article-copy">
         <span class="phase-badge phase2 stagger">Fase 2 · Compreender nos dois sentidos</span>
+        <div class="article-title-box stagger"><strong>Artigo completo</strong>BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding</div>
         <h2 class="stagger">BERT: contexto dos dois lados</h2>
         <p class="article-lead stagger">Em vez de gerar a próxima palavra, o encoder aprende representações usando o contexto à esquerda e à direita.</p>
         <div class="article-points stagger">
@@ -2141,11 +2131,12 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
     </div>
   </section>
 
-  <!-- ═══ SLIDE 11 — T5 ═══ -->
-  <section class="slide" id="slide11" aria-label="Slide 11: T5, span corruption e C4" data-phase="phase2">
+  <!-- ═══ SLIDE 12 — T5 ═══ -->
+  <section class="slide" id="slide11" aria-label="Slide 13: T5, span corruption e C4" data-phase="phase2">
     <div class="slide-inner article-layout">
       <div class="article-copy">
         <span class="phase-badge phase2 stagger">Fase 2 · Uma tarefa para tudo</span>
+        <div class="article-title-box stagger"><strong>Artigo completo</strong>Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer</div>
         <h2 class="stagger">T5: texto entra, texto sai</h2>
         <p class="article-lead stagger">Com encoder e decoder, tradução, resumo e perguntas e respostas podem compartilhar o mesmo formato de entrada e saída.</p>
         <div class="article-points stagger">
@@ -2192,8 +2183,8 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
     </div>
   </section>
 
-  <!-- ═══ SLIDE 12 — SÍNTESE E PRÓXIMOS PASSOS ═══ -->
-  <section class="slide" id="slide12" aria-label="Slide 12: Síntese e próximos passos" data-phase="phase2">
+  <!-- ═══ SLIDE 13 — SÍNTESE E PRÓXIMOS PASSOS ═══ -->
+  <section class="slide" id="slide12" aria-label="Slide 14: Síntese e próximos passos" data-phase="phase2">
     <div class="slide-inner closing-slide">
       <span class="phase-badge phase2 stagger">Síntese · Da representação à geração</span>
       <h2 class="stagger">Três escolhas que moldaram os LLMs</h2>
@@ -2215,7 +2206,7 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
       </div>
       <div class="closing-thanks stagger">
         <h2>Obrigado! Perguntas?</h2>
-        <p><strong>Mateus Antunes Belo</strong> · Orientadora: <strong>Profa. Adriana Postal</strong></p>
+        <p><strong>Mateus Antunes Belo</strong> · Orientadora: <strong>Professora Doutora Adriana Postal</strong></p>
       </div>
     </div>
   </section>
@@ -2232,7 +2223,7 @@ p, li { font-size: clamp(1rem, 1.2vw, 1.15rem); }
 /* ═══════════════════════════════════════════
    CONSTANTES E ESTADO
    ═══════════════════════════════════════════ */
-const TOTAL_SLIDES = 12;
+const TOTAL_SLIDES = 14;
 let current = 0;
 let transitionState = null;
 let suppressClickUntil = 0;
@@ -3320,13 +3311,13 @@ function triggerSlideInteractions(idx) {
   if (slideInitialized.has(idx)) return;
   slideInitialized.add(idx);
   switch (idx) {
-    case 2: /* timeline */
+    case 4: /* timeline */
       setTimeout(animateTimeline, 400);
       break;
-    case 3: /* bengio embed space */
+    case 5: /* bengio embed space */
       setTimeout(setupEmbedCanvas, 300);
       break;
-    case 6: /* sentencepiece tokenizer */
+    case 8: /* sentencepiece tokenizer */
       setTimeout(() => {
         if (tokInput && tokInput.value) {
           currentTokens = simpleTokenize(tokInput.value);
@@ -3334,11 +3325,11 @@ function triggerSlideInteractions(idx) {
         }
       }, 500);
       break;
-    case 7: /* transformer attention heatmap */
+    case 9: /* transformer attention heatmap */
       buildAttnHeatmap();
       drawWaves();
       break;
-    case 11: /* synthesis timeline */
+    case 13: /* synthesis timeline */
       buildEvoTimeline();
       break;
   }
